@@ -7,7 +7,11 @@ import pandas as pd
 from subprocess import call
 from datetime import datetime, timedelta
 from PIL import ImageTk, Image
+import locale
 
+locale.setlocale(locale.LC_ALL, 'pl_PL.UTF-8')
+
+# TODO: move data from forecast to application class so other classes can use it
 
 class Application:
     def __init__(self):
@@ -19,48 +23,51 @@ class Application:
         self.wu_api_key = config['wu_api_key']
 
         self.master = tk.Tk()
-        self.master_f = tk.Frame(self.master, bg="black")
-        self.master_f.pack()
-        #for i in range(2):
-        #    self.master.grid_rowconfigure(i, weight=1)
-        for j in range(3):
-            self.master_f.grid_columnconfigure(j, weight=1)
+        self.master_frame = tk.Frame(self.master, bg="black")
+        self.master_frame.pack(fill="both", expand=1)
 
-        self.weather = Weather(self.master_f)
-        # self.weather.frame.grid(row=0, column=0, sticky="NW")
-        self.weather.frame.pack(side="top", anchor="nw")
+        self.top_frame = tk.Frame(self.master_frame, bg="black")
+        self.top_frame.pack(side="top", fill="both")
+        self.bottom_frame = tk.Frame(self.master_frame, bg="black")
+        self.bottom_frame.pack(side="bottom", fill="both", expand=1)
 
-        self.astro = Astro(self.master_f)
-        # self.astro.frame.grid(row=0, column=1, sticky="N")
-        self.astro.frame.pack(side="top", anchor="n")
+        self.weather = Weather(self.top_frame)
+        self.weather.frame.pack(side="left", anchor="nw", fill="both")
 
-        self.dttm = Dttm(self.master_f)
-        # self.dttm.frame.grid(row=0, column=2, sticky="NE")
-        self.dttm.frame.pack(side="top", anchor="ne")
+        self.dttm = Dttm(self.top_frame)
+        self.dttm.frame.pack(side="right", anchor="ne", fill="both")
 
-        self.forecast = Forecast(self.master_f, self.wu_api_key, self.dsn_api_key)
-        # self.forecast.frame.grid(row=1, column=0, sticky="SW", columnspan=2)
-        self.forecast.frame.pack(side="bottom", anchor="sw")
+        self.astro = Astro(self.top_frame)
+        self.astro.frame.pack(side="top", anchor="n", fill="both")
 
-        self.calendar = Calendar(self.master_f)
-        # self.calendar.frame.grid(row=1, column=2, sticky="SE")
-        self.calendar.frame.pack(side="bottom", anchor="se")
+        self.forecast = Forecast(self.bottom_frame, self.wu_api_key, self.dsn_api_key)
+        self.forecast.frame.pack(side="left", anchor="sw")
+
+        self.calendar = Calendar(self.bottom_frame)
+        self.calendar.frame.pack(side="right", anchor="se")
 
 
 class Dttm:
     def __init__(self, master):
         self.frame = tk.Frame(master, bg="black")
+
         self.time = tk.StringVar()
-        self.time_label = tk.Label(self.frame, textvariable=self.time, font=('Helvetica', 30), bg="black", fg="white")
-        self.time_label.grid(row=0, column=0, sticky="E")
+        self.time_label = tk.Label(self.frame, textvariable=self.time, font=('Helvetica', 100), bg="black", fg="white")
+        self.time_label.pack(side="top", anchor="e")
+
+        # self.week_day = tk.StringVar()
+        # self.week_day_label = tk.Label(self.frame, textvariable=self.week_day, font=('Helvetica', 50), bg="black", fg="white")
+        # self.week_day_label.pack(side="top", anchor="e")
+
         self.date = tk.StringVar()
-        self.date_label = tk.Label(self.frame, textvariable=self.date, bg="black", fg="white")
-        self.date_label.grid(row=1, column=0, sticky="E")
+        self.date_label = tk.Label(self.frame, textvariable=self.date, font=('Helvetica', 50), bg="black", fg="white")
+        self.date_label.pack(side="top", anchor="e")
         self.update()
 
     def update(self):
         self.time.set(time.strftime("%H:%M"))
-        self.date.set(time.strftime("%Y-%m-%d"))
+        # self.week_day.set(time.strftime("%A"))
+        self.date.set(time.strftime("%A, %d. %b"))
         self.frame.after(1000, self.update)
 
 
@@ -68,7 +75,7 @@ class Weather:
     def __init__(self, master):
         self.frame = tk.Frame(master, bg= "black")
         self.weather = tk.Label(self.frame, text="18 stopni C", bg="black", fg="white")
-        self.weather.pack()
+        self.weather.pack(anchor="nw")
 
 
 class Astro:
@@ -76,23 +83,26 @@ class Astro:
         self.frame = tk.Frame(master, bg= "black")
         self.sun_rise = tk.Label(self.frame, text="wschod: 06:21", bg="black", fg="white")
         self.sun_set = tk.Label(self.frame, text="zachod: 17:55", bg="black", fg="white")
-        self.sun_rise.pack()
-        self.sun_set.pack()
+        self.sun_rise.pack(side="top", anchor="n")
+        self.sun_set.pack(side="top", anchor="n")
 
 
 class Forecast:
     def __init__(self, master, wu_api_key, dsn_api_key):
         self.wu_api_key = wu_api_key
         self.dsn_api_key = dsn_api_key
-        self.frame = tk.Frame(master, bg= "black")
-        self.forecast_label = tk.Label(self.frame, bg="black", fg="white")
+        self.frame = tk.Frame(master, bg="black")
+        self.forecast_label = tk.Label(self.frame, bg="black", fg="black")
         self.update()
 
     def update(self):
         self.get_historical(self.wu_api_key)
         self.get_forecast(self.dsn_api_key)
-        self.plot_forecast_in_r()
-        self.refresh_plot_label()
+        call(["Rscript", "plot.R"])
+        img = ImageTk.PhotoImage(Image.open("p.png"))
+        self.forecast_label = tk.Label(self.frame, image=img, bg="black", fg="black")
+        self.forecast_label.image = img
+        self.forecast_label.pack(side="bottom")
         self.frame.after(1000*60*30, self.update)
 
     def get_historical(self, wu_api_key):
@@ -159,25 +169,12 @@ class Forecast:
 
         print("[DONE]")
 
-    def plot_forecast_in_r(self):
-        print("[plotting]")
-        call(["Rscript", "plot.R"])
-        print("[plotting DONE]")
-
-    def refresh_plot_label(self):
-        img = ImageTk.PhotoImage(Image.open("p.png"))
-        self.forecast_label = tk.Label(self.frame, image=img)
-        self.forecast_label.image = img
-        self.forecast_label.grid(row=0, column=0, sticky="NSEW")
-
-
-
 
 class Calendar:
     def __init__(self, master):
         self.frame = tk.Frame(master, bg="black")
         self.calendar = tk.Label(self.frame, text="CALENDAR", bg="black", fg="white")
-        self.calendar.pack()
+        self.calendar.pack(side="bottom", anchor="se")
 
 
 app = Application()
