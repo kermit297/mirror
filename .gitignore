@@ -1,0 +1,10 @@
+.Rproj.user/
+venv/
+.idea
+.Rhistory
+config.json
+credentials.json
+*.feather
+*.pptx
+*.Rproj
+p.png
