@@ -12,31 +12,31 @@ dh <- read_feather('d_hist.feather')
 n <- dh$temp_min[1]
 m <- dh$temp_max[1]
 
-df <- read_feather('d.feather') %>%
-    mutate(dttm = as.POSIXct(dttm, origin = orig, tz = "Europe/Warsaw"),
-           precipLabel = ifelse(precipInt > 0.5, round(precipInt,1), NA),
-           umbrella = ifelse(precipInt > 0.5 & precipProb > 0.2, 
+df <- read_feather('d_hr.feather') %>%
+    mutate(dttm = as.POSIXct(hr_dttm, origin = orig, tz = "Europe/Warsaw"),
+           hr_precipLabel = ifelse(hr_precipInt > 0.5, round(hr_precipInt,1), NA),
+           umbrella = ifelse(hr_precipInt > 0.5 & hr_precipProb > 0.2, 
                              intToUtf8(utf8ToInt("\xe2\x98\x82")), NA),
-           precipProb = ifelse(precipProb==0&lag(precipProb)==0&lead(precipProb)==0,
-                               NA, precipProb),
-           temp_col = case_when(temp < n ~ n,
-                                temp > m ~ m,
-                                TRUE ~ temp
+           hr_precipProb = ifelse(hr_precipProb==0&lag(hr_precipProb)==0&lead(hr_precipProb)==0,
+                               NA, hr_precipProb),
+           temp_col = case_when(hr_temp < n ~ n,
+                                hr_temp > m ~ m,
+                                TRUE ~ hr_temp
                                 )
            )
 
-dd <- read_feather('d_daily.feather') %>%
-    mutate(dttm = as.POSIXct(dttm, origin = orig, tz = "Europe/Warsaw"),
-           sunrise = as.POSIXct(sunrise, origin = orig, tz = "Europe/Warsaw"),
-           sunset = as.POSIXct(sunset, origin = orig, tz = "Europe/Warsaw"),
+dd <- read_feather('d_d.feather') %>%
+    mutate(dttm = as.POSIXct(d_dttm, origin = orig, tz = "Europe/Warsaw"),
+           sunrise = as.POSIXct(d_sunrise, origin = orig, tz = "Europe/Warsaw"),
+           sunset = as.POSIXct(d_sunset, origin = orig, tz = "Europe/Warsaw"),
            day = weekdays(sunrise, abbreviate = FALSE),
            d_len = as.character(as.hms(difftime(sunset,sunrise))),
            day_x = as.POSIXct(ifelse(sunrise > Sys.time(), sunrise, Sys.time()), 
                               origin = orig, tz = "Europe/Warsaw")
            )
 
-y0 = min(df$temp)
-y1 = max(df$temp)+5
+y0 = min(df$hr_temp)
+y1 = max(df$hr_temp)+5
 
 ggplot(df, aes(xmin = dttm-minutes(30), xmax = dttm+minutes(30))) +
     # day/night
@@ -45,21 +45,24 @@ ggplot(df, aes(xmin = dttm-minutes(30), xmax = dttm+minutes(30))) +
     # midnight dotted line
     geom_vline(xintercept = df$dttm[hour(df$dttm)==0], colour = 'white', linetype = 3) +
     # temperature
-    geom_rect(aes(ymin = y0-5, ymax = temp, fill = temp_col), show.legend = FALSE) +
-    geom_text(aes(x = dttm, y = temp, label = round(temp,0)), vjust = 1.5, size = 1.8) +
+    geom_rect(aes(ymin = y0-5, ymax = hr_temp, fill = temp_col), show.legend = FALSE) +
+    geom_text(aes(x = dttm, y = hr_temp, label = round(hr_temp,0)), vjust = 1.5, size = 1.7) +
     # cloud cover
-    geom_rect(aes(ymin = y1-cloud_cov*3, ymax = y1+cloud_cov*3), fill = "white") +
+    geom_rect(aes(ymin = y1-hr_cloudCov*3, ymax = y1+hr_cloudCov*3), fill = "white") +
     # geom_hline(data = NULL, yintercept = c(y1,y1+3), linetype = 2, colour = "white", alpha = 0.5) +
     # precip prob
-    geom_line(aes(x = dttm, y = y1+precipProb*3), colour = "steelblue", size = 0.5, 
-              linetype = 2) + 
+    geom_polygon(aes(x = dttm, y = y1+hr_precipProb*3), 
+                 fill = alpha("steelblue", 0.5), 
+                 colour = alpha("steelblue", 0.5) 
+              ) + 
     # precip intensity
     geom_rect(aes(xmin = dttm-minutes(30), 
                   xmax = dttm+minutes(30),
                   ymax = y1, 
-                  ymin = y1-precipInt*1), 
-              fill = "steelblue", alpha = 0.8) +
-    geom_text(aes(x = dttm, y = y1-precipInt*1, label = precipLabel), vjust = -0.5, size = 1.8) +
+                  ymin = y1-hr_precipInt*5), 
+              fill = alpha("steelblue", 0.8)
+              ) +
+    geom_text(aes(x = dttm, y = y1-hr_precipInt*1, label = hr_precipLabel), vjust = -0.5, size = 1.8) +
     # umbrella
     # geom_text(aes(x = dttm, y = y1-2, label = umbrella), colour = "white", size = 1.8) +
     # day label
@@ -82,7 +85,7 @@ ggplot(df, aes(xmin = dttm-minutes(30), xmax = dttm+minutes(30))) +
           axis.text.y = element_blank(),
           #axis.ticks.x = element_blank(),
           axis.ticks.y = element_blank(),
-          axis.text.x = element_text(size = 7),
+          axis.text.x = element_text(size = 6),
           plot.margin = unit(c(0,-0.5,-0.7,-1.5), units = "lines"))
 
 ggsave(filename = 'p.png', width = 6, height = 2, units = "in", dpi = 200)
