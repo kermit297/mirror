@@ -1,6 +1,7 @@
-import Tkinter as tk
+import tkinter as tk
 import time
-import urllib2
+import datetime
+import urllib.request
 import json
 import numpy as np
 import pandas as pd
@@ -8,17 +9,22 @@ from subprocess import call
 from datetime import datetime, timedelta
 from PIL import ImageTk, Image
 import locale
-
-from PIL.ImageTk import PhotoImage
+import logging
+# import pytz
+# from PIL.ImageTk import PhotoImage
 
 locale.setlocale(locale.LC_ALL, 'pl_PL.UTF-8')
+logging.basicConfig(filename="log.log",
+                    level=logging.DEBUG,
+                    format='%(asctime)s\t%(levelname)s\t%(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S')
 
 
 class Application(tk.Tk):
     def __init__(self):
 
         tk.Tk.__init__(self)
-
+        logging.info("Application initialization")
         with open('config.json') as data_file:
             config = json.load(data_file)
 
@@ -43,8 +49,8 @@ class Application(tk.Tk):
         self.dttm = Dttm(self.top_frame)
         self.dttm.pack(side="right", anchor="ne", fill="both")
         #
-        # self.astro = Astro(self.top_frame)
-        # self.astro.frame.pack(side="top", anchor="n", fill="both")
+        self.astro = Astro(self.top_frame)
+        self.astro.frame.pack(side="top", anchor="n", fill="both")
         #
         self.forecast = Forecast(self.bottom_frame)
         self.forecast.pack(side="left", anchor="sw")
@@ -54,37 +60,44 @@ class Application(tk.Tk):
         self.refresh_data()
 
     def refresh_data(self):
+        logging.warning("Application refresh")
         self.weather_data_forecast.get_data()
         self.weather_data_forecast.save_data()
         self.weather_data_hist.get_data()
         self.weather_data_hist.save_data()
         self.weather.refresh(getattr(self.weather_data_forecast, 'curr_temp'))
         self.forecast.refresh()
+        self.astro.refresh(self.weather_data_forecast.d_sunrise[0], self.weather_data_forecast.d_sunset[0])
+        self.after(30*60*1000, self.refresh_data)
 
 
 class WeatherDataHist:
     def __init__(self, wu_api_key):
+        logging.debug("Historical data initialization")
         self.wu_api_key = wu_api_key
         self.data = {}
         self.hist_temp_min = int()
         self.hist_temp_max = int()
 
     def get_data(self):
+        logging.debug("Historical data getting")
         date = datetime.now()
         min_dt = (date - timedelta(days=15)).strftime("%m%d")
         max_dt = (date + timedelta(days=15)).strftime("%m%d")
         url = "http://api.wunderground.com/api/{0}/planner_{1}{2}/q/PL/Warsaw.json".format(self.wu_api_key, min_dt, max_dt)
-        self.data = history = json.load(urllib2.urlopen(url))['trip']
+        self.data = history = json.load(urllib.request.urlopen(url))['trip']
         self.hist_temp_min = (int(history['temp_low']['avg']['C'])+int(history['temp_low']['min']['C']))/2
         self.hist_temp_max = (int(history['temp_high']['avg']['C'])+int(history['temp_high']['max']['C']))/2
 
     def save_data(self):
+        logging.debug("Historical data saving")
         d_hist = pd.DataFrame({'temp_min': [self.hist_temp_min], 'temp_max': [self.hist_temp_max]})
         d_hist.to_feather('d_hist.feather')
 
 
 class WeatherDataForecast:
     def __init__(self, dsn_api_key):
+        logging.debug("Data forecast initialization")
         # dictionaries of names in the self object and in api data
         self.hr_vars = {'hr_dttm': 'time', 'hr_temp': 'temperature', 'hr_humidity': 'humidity',
                         'hr_cloudCov': 'cloudCover', 'hr_precipProb': 'precipProbability',
@@ -94,9 +107,9 @@ class WeatherDataForecast:
         self.dsn_api_key = dsn_api_key
 
     def get_data(self):
-
+        logging.debug("Data forecast getting")
         url = "https://api.darksky.net/forecast/{0}/52.200521,20.963080?lang=pl&units=si".format(self.dsn_api_key)
-        forecast = json.load(urllib2.urlopen(url))
+        forecast = json.load(urllib.request.urlopen(url))
 
         hr_forecast = forecast['hourly']['data']
         n = len(hr_forecast)
@@ -119,6 +132,7 @@ class WeatherDataForecast:
             setattr(self, v_app, d_current[v_net])
 
     def save_data(self):
+        logging.debug("Data forecast saving")
         d_hr = {}  # an empty dictionary, will be converted to data frame
         for hr_var, _ in self.hr_vars.items():  # get variable names from dictionary
             d_hr[hr_var] = getattr(self, hr_var)  # add list to new dictionary
@@ -134,6 +148,7 @@ class WeatherDataForecast:
 
 class Dttm(tk.Frame):
     def __init__(self, master):
+        logging.debug("Frame Dttm initialization")
         tk.Frame.__init__(self, master, bg = 'black')
         #self.frame = tk.Frame(master, bg="black")
 
@@ -159,41 +174,54 @@ class Dttm(tk.Frame):
 
 class Weather(tk.Frame):
     def __init__(self, master):
+        logging.debug("Frame Weather initialization")
         tk.Frame.__init__(self, master, bg='black')
         self.temp = tk.StringVar()
-        self.weather = tk.Label(self, textvariable=self.temp, font=('Helvetica', 50), bg="black", fg="white")
-        self.weather.pack(anchor="nw")
+        self.weather = tk.Label(self, textvariable=self.temp, font=('Helvetica', 100), bg="black", fg="white")
+        self.weather.pack(anchor="nw", ipadx=20, ipady=10)
 
     def refresh(self, temp):
-        self.temp.set(temp)
+        logging.debug("Frame Weather refresh")
+        temp = round(temp/0.5)*0.5  # round to nearest 0.5
+        self.temp.set(str(temp)+u'\N{DEGREE SIGN}'+'C')
 
 
 class Astro:
     def __init__(self, master):
+        logging.debug("Frame Astro initialization")
         self.frame = tk.Frame(master, bg= "black")
-        self.sun_rise = tk.Label(self.frame, text="wschod: 06:21", bg="black", fg="white")
-        self.sun_set = tk.Label(self.frame, text="zachod: 17:55", bg="black", fg="white")
-        self.sun_rise.pack(side="top", anchor="n")
-        self.sun_set.pack(side="top", anchor="n")
+        self.sunrise = tk.StringVar()
+        self.sunset = tk.StringVar()
+        self.sunrise_label = tk.Label(self.frame, textvariable=self.sunrise, bg="black", fg="white")
+        self.sunset_label = tk.Label(self.frame, textvariable=self.sunset, bg="black", fg="white")
+        self.sunrise_label.pack(side="top", anchor="n", ipady=0)
+        self.sunset_label.pack(side="top", anchor="n")
+
+    def refresh(self, sunrise, sunset):
+        sunrise = datetime.utcfromtimestamp(sunrise).strftime('%H:%M')
+        sunset = datetime.utcfromtimestamp(sunset).strftime('%H:%M')
+        self.sunrise.set("Wschod: "+sunrise)
+        self.sunset.set("Zachod: "+sunset)
 
 
 class Forecast(tk.Frame):
     def __init__(self, master):
+        logging.debug("Frame Forecast initialization")
         tk.Frame.__init__(self, master, bg="black")
-        self.forecast_label = tk.Label(self, bg="black", fg="black")
+        self.forecast_label = tk.Label(self, bg="black")
         self.forecast_label.pack(side="bottom")
 
     def refresh(self):
+        logging.debug("Forecast refresh")
         call(["Rscript", "plot.R"])
         img = ImageTk.PhotoImage(Image.open("p.png"))
-        self.forecast_label.image = img
-        # TODO: doesn't work
-        # self.forecast_label.pack(side="bottom")
-        # self.after(1000*10, self.refresh())
+        self.forecast_label.configure(image=img)
+        self.image = img
 
 
 class Calendar:
     def __init__(self, master):
+        logging.debug("Frame Calendar initialization")
         self.frame = tk.Frame(master, bg="black")
         self.calendar = tk.Label(self.frame, text="CALENDAR", bg="black", fg="white")
         self.calendar.pack(side="bottom", anchor="se")

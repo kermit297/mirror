@@ -45,16 +45,16 @@ ggplot(df, aes(xmin = dttm-minutes(30), xmax = dttm+minutes(30))) +
     # midnight dotted line
     geom_vline(xintercept = df$dttm[hour(df$dttm)==0], colour = 'white', linetype = 3) +
     # temperature
-    geom_rect(aes(ymin = y0-5, ymax = hr_temp, fill = temp_col), show.legend = FALSE) +
+    geom_rect(aes(ymin = y0-5, ymax = hr_temp, fill = temp_col), show.legend = TRUE) +
     geom_text(aes(x = dttm, y = hr_temp, label = round(hr_temp,0)), vjust = 1.5, size = 1.7) +
     # cloud cover
     geom_rect(aes(ymin = y1-hr_cloudCov*3, ymax = y1+hr_cloudCov*3), fill = "white") +
     # geom_hline(data = NULL, yintercept = c(y1,y1+3), linetype = 2, colour = "white", alpha = 0.5) +
     # precip prob
-    geom_polygon(aes(x = dttm, y = y1+hr_precipProb*3), 
-                 fill = alpha("steelblue", 0.5), 
-                 colour = alpha("steelblue", 0.5) 
-              ) + 
+    # geom_polygon(aes(x = dttm, y = y1+hr_precipProb*3), 
+    #              fill = alpha("steelblue", 0.5), 
+    #              colour = alpha("steelblue", 0.5) 
+    #           ) + 
     # precip intensity
     geom_rect(aes(xmin = dttm-minutes(30), 
                   xmax = dttm+minutes(30),
@@ -62,11 +62,11 @@ ggplot(df, aes(xmin = dttm-minutes(30), xmax = dttm+minutes(30))) +
                   ymin = y1-hr_precipInt*5), 
               fill = alpha("steelblue", 0.8)
               ) +
-    geom_text(aes(x = dttm, y = y1-hr_precipInt*1, label = hr_precipLabel), vjust = -0.5, size = 1.8) +
+    geom_text(aes(x = dttm, y = y1-hr_precipInt*5, label = hr_precipLabel), vjust = -0.5, size = 1.8) +
     # umbrella
     # geom_text(aes(x = dttm, y = y1-2, label = umbrella), colour = "white", size = 1.8) +
     # day label
-    geom_label(data = dd, aes(x = day_x, y = y1+3, label = day), size = 2, colour = "black", alpha = 0.3, hjust = 0.3) +
+    geom_label(data = dd, aes(x = day_x, y = y0-2.5, label = day), size = 2, colour = "black", alpha = 0.3, hjust = 0.3) +
     # sunrise
     # geom_label(data = dd, aes(x = sunrise, y = y0-2.5, label = paste(intToUtf8(utf8ToInt("\xe2\x98\xbc")),intToUtf8(utf8ToInt("\xe2\x86\x91")),format(sunrise, "%H:%M:%S"))), fill = 'black', size = 2, colour = "yellow", alpha = 0.8) +
     # sunset
@@ -79,13 +79,20 @@ ggplot(df, aes(xmin = dttm-minutes(30), xmax = dttm+minutes(30))) +
     scale_fill_distiller(palette = "Spectral", limits = c(n,m)) +
     scale_x_datetime(date_breaks = '3 hours', date_minor_breaks = '3 hours', 
                      date_labels = "%H:%M") +
-    theme(plot.background = element_rect(fill = 'black', colour = 'black'), 
-          panel.background = element_rect(fill = 'black', colour = 'black'), 
+    theme(plot.background = element_rect(fill = 'black', colour = NA), 
+          panel.background = element_rect(fill = 'black', colour = NA),
+          legend.background = element_rect(fill = 'black', colour = NA),
+          legend.text = element_text(colour = 'white'),
+          legend.title = element_blank(),
+          #legend.position = c(1.2, .5),
+          #legend.direction = 'horizontal',
+          legend.box.spacing = unit(-0.1,'inches'),
           panel.grid = element_blank(),
           axis.text.y = element_blank(),
           #axis.ticks.x = element_blank(),
           axis.ticks.y = element_blank(),
           axis.text.x = element_text(size = 6),
-          plot.margin = unit(c(0,-0.5,-0.7,-1.5), units = "lines"))
+          plot.margin = unit(c(0,-0.2,-0.7,-1.5), units = "lines"))
 
+file.rename('p.png', paste0('p_',strftime(file.info('p.png')$mtime, '%Y_%m_%d_%H_%M_%S'),'.png'))
 ggsave(filename = 'p.png', width = 6, height = 2, units = "in", dpi = 200)

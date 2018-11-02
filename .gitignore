@@ -1,5 +1,6 @@
 .Rproj.user/
 venv/
+venv3/
 .idea
 .Rhistory
 config.json
@@ -7,5 +8,6 @@ credentials.json
 *.feather
 *.pptx
 *.Rproj
-p.png
+*.png
 .Rproj.user
+log.log
