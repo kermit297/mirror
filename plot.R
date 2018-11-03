@@ -1,31 +1,31 @@
-library(feather)
 library(tidyverse)
-library(grid)
-library(gridExtra)
+#library(grid)
+#library(gridExtra)
 library(lubridate)
 library(hms)
 
-Sys.setlocale("LC_ALL", "pl_PL.UTF-8")
+#Sys.setlocale("LC_ALL", "pl_PL.UTF-8")
 orig <- ymd_hms('1970-01-01 00:00:00')
 
-dh <- read_feather('d_hist.feather')
+dh <- read.csv('d_hist.csv')
 n <- dh$temp_min[1]
 m <- dh$temp_max[1]
 
-df <- read_feather('d_hr.feather') %>%
+df <- read.csv('d_hr.csv') %>%
     mutate(dttm = as.POSIXct(hr_dttm, origin = orig, tz = "Europe/Warsaw"),
            hr_precipLabel = ifelse(hr_precipInt > 0.5, round(hr_precipInt,1), NA),
            umbrella = ifelse(hr_precipInt > 0.5 & hr_precipProb > 0.2, 
                              intToUtf8(utf8ToInt("\xe2\x98\x82")), NA),
            hr_precipProb = ifelse(hr_precipProb==0&lag(hr_precipProb)==0&lead(hr_precipProb)==0,
                                NA, hr_precipProb),
-           temp_col = case_when(hr_temp < n ~ n,
-                                hr_temp > m ~ m,
-                                TRUE ~ hr_temp
-                                )
+           temp_col = hr_temp
+           # temp_col = case_when(hr_temp < n ~ n,
+           #                      hr_temp > m ~ m,
+           #                      TRUE ~ hr_temp
+           #                      )
            )
 
-dd <- read_feather('d_d.feather') %>%
+dd <- read.csv('d_d.csv') %>%
     mutate(dttm = as.POSIXct(d_dttm, origin = orig, tz = "Europe/Warsaw"),
            sunrise = as.POSIXct(d_sunrise, origin = orig, tz = "Europe/Warsaw"),
            sunset = as.POSIXct(d_sunset, origin = orig, tz = "Europe/Warsaw"),
@@ -39,7 +39,7 @@ y0 = min(df$hr_temp)
 y1 = max(df$hr_temp)+5
 
 ggplot(df, aes(xmin = dttm-minutes(30), xmax = dttm+minutes(30))) +
-    # day/night
+    # day-night
     geom_rect(data = dd, aes(xmin = sunrise, xmax = sunset, ymin = -Inf, ymax = Inf), 
               fill = 'yellow', alpha = 0.1) +
     # midnight dotted line
