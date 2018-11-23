@@ -116,8 +116,8 @@ class WeatherData:
         min_dt = (date - timedelta(days=15)).strftime("%m%d")
         max_dt = (date + timedelta(days=15)).strftime("%m%d")
         url = "http://api.wunderground.com/api/{0}/planner_{1}{2}/q/PL/Warsaw.json".format(self.wu_api_key, min_dt, max_dt)
-        history = json.load(urllib.request.urlopen(url))
-        history = history['trip']
+        html = urllib.request.urlopen(url).read()
+        history = json.loads(html.decode('utf-8'))['trip']
         self.data['hist_temp_min'] = (float(history['temp_low']['avg']['C']) + float(history['temp_low']['min']['C'])) / 2
         self.data['hist_temp_max'] = (float(history['temp_high']['avg']['C']) + float(history['temp_high']['max']['C'])) / 2
 
