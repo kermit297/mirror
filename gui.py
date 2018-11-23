@@ -1,24 +1,17 @@
 import tkinter as tk
 import time
-import datetime
 import urllib.request
 import json
-import numpy as np
-import pandas as pd
-from subprocess import call
-from datetime import datetime, timedelta
-from PIL import ImageTk, Image
+from datetime import timedelta, datetime
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+import matplotlib.patches as patches
+import matplotlib.cm as cm
+from matplotlib.colors import Normalize
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import locale
-import os, subprocess
-# import logging
-# import pytz
-# from PIL.ImageTk import PhotoImage
 
 locale.setlocale(locale.LC_ALL, 'pl_PL.UTF-8')
-# logging.basicConfig(filename="log.log",
-#                     level=logging.DEBUG,
-#                     format='%(asctime)s\t%(levelname)s\t%(message)s',
-#                     datefmt='%Y-%m-%d %H:%M:%S')
 
 
 class Application(tk.Tk):
@@ -32,8 +25,7 @@ class Application(tk.Tk):
         self.dsn_api_key = config['dsn_api_key']
         self.wu_api_key = config['wu_api_key']
 
-        self.weather_data_hist = WeatherDataHist(self.wu_api_key)
-        self.weather_data_forecast = WeatherDataForecast(self.dsn_api_key)
+        self.weather_data = WeatherData(self.dsn_api_key, self.wu_api_key)
         #
         # self.master = tk.Tk()
         # self.master_frame = tk.Frame(self.master, bg="black")
@@ -44,17 +36,17 @@ class Application(tk.Tk):
         self.bottom_frame = tk.Frame(self, bg="black")
         self.bottom_frame.pack(side="bottom", fill="both", expand=1)
 
-        self.weather = Weather(self.top_frame)
-        self.weather.pack(side="left", anchor="nw", fill="both")
+        self.current_weather_frame = CurrentWeatherFrame(self.top_frame)
+        self.current_weather_frame.pack(side="left", anchor="nw", fill="both")
 
-        self.dttm = Dttm(self.top_frame)
-        self.dttm.pack(side="right", anchor="ne", fill="both")
+        self.dttm_frame = DttmFrame(self.top_frame)
+        self.dttm_frame.pack(side="right", anchor="ne", fill="both")
         #
-        self.astro = Astro(self.top_frame)
-        self.astro.frame.pack(side="top", anchor="n", fill="both")
+        self.astro_frame = AstroFrame(self.top_frame)
+        self.astro_frame.frame.pack(side="top", anchor="n", fill="both")
         #
-        self.forecast = Forecast(self.bottom_frame)
-        self.forecast.pack(side="left", anchor="sw")
+        self.forecast_frame = ForecastFrame(self.bottom_frame)
+        self.forecast_frame.pack(side="left", anchor="sw")
         #
         # self.calendar = Calendar(self.bottom_frame)
         # self.calendar.frame.pack(side="right", anchor="se")
@@ -62,94 +54,75 @@ class Application(tk.Tk):
 
     def refresh_data(self):
         # logging.warning("Application refresh")
-        self.weather_data_forecast.get_data()
-        self.weather_data_forecast.save_data()
-        self.weather_data_hist.get_data()
-        self.weather_data_hist.save_data()
-        self.weather.refresh(getattr(self.weather_data_forecast, 'curr_temp'))
-        self.forecast.refresh()
-        self.astro.refresh(self.weather_data_forecast.d_sunrise[0], self.weather_data_forecast.d_sunset[0])
+        self.weather_data.get_data()
+        self.current_weather_frame.refresh(getattr(self.weather_data, 'data_curr_temp'))
+        self.forecast_frame.redraw(self.weather_data.data)
+        self.astro_frame.refresh(self.weather_data.data['daily_sunrise'][0], self.weather_data.data['daily_sunset'][0])
         self.after(30*60*1000, self.refresh_data)
 
 
-class WeatherDataHist:
-    def __init__(self, wu_api_key):
-        # logging.debug("Historical data initialization")
+class WeatherData:
+    def __init__(self, dsn_api_key, wu_api_key):
+
+        self.dsn_api_key = dsn_api_key
         self.wu_api_key = wu_api_key
+
         self.data = {}
-        self.hist_temp_min = int()
-        self.hist_temp_max = int()
+
+        self.data_curr_temp = float()
+
+        self.data['hr_dttm'] = list()
+        self.data['hr_temp'] = list()
+        self.data['hr_cloud'] = list()
+        self.data['hr_precip_int'] = list()
+        self.data['hr_precip_prob'] = list()
+        self.data['hr_precip_type'] = list()
+
+        self.data['daily_sunrise'] = list()
+        self.data['daily_sunset'] = list()
+
+        self.data['hist_temp_min'] = float()
+        self.data['hist_temp_max'] = float()
 
     def get_data(self):
-        # logging.debug("Historical data getting")
+        url = "https://api.darksky.net/forecast/{}/52.200521,20.963080?lang=pl&units=si".format(self.dsn_api_key)
+        html = urllib.request.urlopen(url).read()
+        forecast = json.loads(html.decode('utf-8'))
+
+        # current
+        self.data_curr_temp = forecast['currently']['temperature']
+
+        # forecast
+        n = len(forecast['hourly']['data'])
+        for i in range(n):
+            self.data['hr_dttm'].append(datetime.fromtimestamp(forecast['hourly']['data'][i]['time']))
+            self.data['hr_temp'].append(forecast['hourly']['data'][i]['temperature'])
+            self.data['hr_cloud'].append(forecast['hourly']['data'][i]['cloudCover'])
+            self.data['hr_precip_int'].append(forecast['hourly']['data'][i]['precipIntensity'])
+            self.data['hr_precip_prob'].append(forecast['hourly']['data'][i]['precipProbability'])
+            try:
+                self.data['hr_precip_type'].append(forecast['hourly']['data'][i]['precipType'])
+            except:
+                self.data['hr_precip_type'].append('')
+
+        # sun
+        n = len(forecast['daily']['data'])
+        for i in range(n):
+            self.data['daily_sunrise'].append(datetime.fromtimestamp(forecast['daily']['data'][i]['sunriseTime']))
+            self.data['daily_sunset'].append(datetime.fromtimestamp(forecast['daily']['data'][i]['sunsetTime']))
+
+        # historical
         date = datetime.now()
         min_dt = (date - timedelta(days=15)).strftime("%m%d")
         max_dt = (date + timedelta(days=15)).strftime("%m%d")
         url = "http://api.wunderground.com/api/{0}/planner_{1}{2}/q/PL/Warsaw.json".format(self.wu_api_key, min_dt, max_dt)
-        self.data = history = json.load(urllib.request.urlopen(url))['trip']
-        self.hist_temp_min = (int(history['temp_low']['avg']['C'])+int(history['temp_low']['min']['C']))/2
-        self.hist_temp_max = (int(history['temp_high']['avg']['C'])+int(history['temp_high']['max']['C']))/2
-
-    def save_data(self):
-        # logging.debug("Historical data saving")
-        d_hist = pd.DataFrame({'temp_min': [self.hist_temp_min], 'temp_max': [self.hist_temp_max]})
-        #d_hist.to_feather('d_hist.feather')
-        d_hist.to_csv('d_hist.csv', header=True, index=False)
-
-class WeatherDataForecast:
-    def __init__(self, dsn_api_key):
-        # logging.debug("Data forecast initialization")
-        # dictionaries of names in the self object and in api data
-        self.hr_vars = {'hr_dttm': 'time', 'hr_temp': 'temperature', 'hr_humidity': 'humidity',
-                        'hr_cloudCov': 'cloudCover', 'hr_precipProb': 'precipProbability',
-                        'hr_precipInt': 'precipIntensity'}
-        self.d_vars = {'d_dttm': 'time', 'd_sunrise': 'sunriseTime', 'd_sunset': 'sunsetTime'}
-        self.curr_vars = {'curr_temp': 'temperature', 'curr_summary': 'summary'}
-        self.dsn_api_key = dsn_api_key
-
-    def get_data(self):
-        # logging.debug("Data forecast getting")
-        url = "https://api.darksky.net/forecast/{0}/52.200521,20.963080?lang=pl&units=si".format(self.dsn_api_key)
-        forecast = json.load(urllib.request.urlopen(url))
-
-        hr_forecast = forecast['hourly']['data']
-        n = len(hr_forecast)
-        for v_app, v_net in self.hr_vars.items():
-            tmp = np.zeros(n)
-            for i in range(n):
-                tmp[i] = hr_forecast[i][v_net]
-            setattr(self, v_app, tmp)
-
-        d_forecast = forecast['daily']['data']
-        n = len(d_forecast)
-        for v_app, v_net in self.d_vars.items():
-            tmp = np.zeros(n)
-            for i in range(n):
-                tmp[i] = d_forecast[i][v_net]
-            setattr(self, v_app, tmp)
-
-        d_current = forecast['currently']
-        for v_app, v_net in self.curr_vars.items():
-            setattr(self, v_app, d_current[v_net])
-
-    def save_data(self):
-        # logging.debug("Data forecast saving")
-        d_hr = {}  # an empty dictionary, will be converted to data frame
-        for hr_var, _ in self.hr_vars.items():  # get variable names from dictionary
-            d_hr[hr_var] = getattr(self, hr_var)  # add list to new dictionary
-        d_hr = pd.DataFrame(d_hr)  # convert dictionary to pd
-        # d_hr.to_feather('d_hr.feather')  # save feather file
-        d_hr.to_csv('d_hr.csv', header=True, index=False)
-
-        d_d = {}
-        for d_var, _ in self.d_vars.items():
-            d_d[d_var] = getattr(self, d_var)
-        d_d = pd.DataFrame(d_d)
-        # d_d.to_feather('d_d.feather')
-        d_d.to_csv('d_d.csv', header=True, index=False)
+        history = json.load(urllib.request.urlopen(url))
+        history = history['trip']
+        self.data['hist_temp_min'] = (float(history['temp_low']['avg']['C']) + float(history['temp_low']['min']['C'])) / 2
+        self.data['hist_temp_max'] = (float(history['temp_high']['avg']['C']) + float(history['temp_high']['max']['C'])) / 2
 
 
-class Dttm(tk.Frame):
+class DttmFrame(tk.Frame):
     def __init__(self, master):
         # logging.debug("Frame Dttm initialization")
         tk.Frame.__init__(self, master, bg = 'black')
@@ -175,7 +148,7 @@ class Dttm(tk.Frame):
         self.after(1000, self.refresh)
 
 
-class Weather(tk.Frame):
+class CurrentWeatherFrame(tk.Frame):
     def __init__(self, master):
         # logging.debug("Frame Weather initialization")
         tk.Frame.__init__(self, master, bg='black')
@@ -189,7 +162,7 @@ class Weather(tk.Frame):
         self.temp.set(str(temp)+u'\N{DEGREE SIGN}'+'C')
 
 
-class Astro:
+class AstroFrame:
     def __init__(self, master):
         # logging.debug("Frame Astro initialization")
         self.frame = tk.Frame(master, bg= "black")
@@ -201,31 +174,100 @@ class Astro:
         self.sunset_label.pack(side="top", anchor="n")
 
     def refresh(self, sunrise, sunset):
-        sunrise = datetime.utcfromtimestamp(sunrise).strftime('%H:%M')
-        sunset = datetime.utcfromtimestamp(sunset).strftime('%H:%M')
+        sunrise = sunrise.strftime('%H:%M')
+        sunset = sunset.strftime('%H:%M')
         self.sunrise.set("Wschod: "+sunrise)
         self.sunset.set("Zachod: "+sunset)
 
 
-class Forecast(tk.Frame):
+class ForecastFrame(tk.Frame):
     def __init__(self, master):
-        # logging.debug("Frame Forecast initialization")
         tk.Frame.__init__(self, master, bg="black")
-        self.forecast_label = tk.Label(self, bg="black")
-        self.forecast_label.pack(side="bottom")
+        #self.forecast_label = tk.Label(self, bg="black")
+        #self.forecast_label.pack(side="bottom")
 
-    def refresh(self):
-        # logging.debug("Forecast refresh")
-        if os.name == 'nt':
-            subprocess.call("C:/Program Files/R/R-3.5.1/bin/Rscript.exe plot.R")
-        else:
-            call(["Rscript", "plot.R"])
-        img = ImageTk.PhotoImage(Image.open("p.png"))
-        self.forecast_label.configure(image=img)
-        self.image = img
+    def redraw(self, data):
+        dttm_min = min(data['hr_dttm'])
+        dttm_max = max(data['hr_dttm'])
+        dttm_width = timedelta(hours=1)
+
+        temp_min = min(data['hr_temp'])
+        temp_max = max(data['hr_temp'])
+        temp_base = temp_min - 2
+
+        scale_factor = (temp_max - temp_min) / 8
+
+        norm_temp = Normalize(vmin=data['hist_temp_min'], vmax=data['hist_temp_max'], clip=True)
+        mapper_temp = cm.ScalarMappable(norm=norm_temp, cmap=cm.viridis)  # coolwarm
+
+        plt.style.use('dark_background')
+
+        fig, ax = plt.subplots(1, figsize=(12, 4), dpi=100)
+
+        for s1, s2 in zip(data['daily_sunrise'], data['daily_sunset']):
+            rect_daylight = patches.Rectangle((s1, temp_base),
+                                              (s2 - s1),
+                                              # (s2-s1).total_seconds()/(60*60*24),
+                                              temp_max + 4 - temp_base,
+                                              edgecolor='none', facecolor='yellow', alpha=0.1)
+            ax.add_patch(rect_daylight)
+
+            rect_daylight_ext = patches.Rectangle((s1 - timedelta(hours=0.5), temp_base),
+                                                  (s2 - s1 + timedelta(hours=1)),
+                                                  temp_max + 4 - temp_base,
+                                                  edgecolor='none', facecolor='yellow', alpha=0.1)
+            ax.add_patch(rect_daylight_ext)
+
+        for x, t, c, p, pp, pt in zip(data['hr_dttm'], data['hr_temp'], data['hr_cloud'],
+                                      data['hr_precip_int'], data['hr_precip_prob'], data['hr_precip_type']):
+            rect_temp = patches.Rectangle((x, temp_base), dttm_width, t - temp_base, edgecolor='none',
+                                          facecolor=mapper_temp.to_rgba(t))
+            ax.add_patch(rect_temp)
+
+            if t < (temp_max + temp_min) / 2:
+                cl = 'white'
+            else:
+                cl = 'black'
+
+            ax.text(x + timedelta(hours=0.5), t - 0.1, str(round(t)), horizontalalignment='center',
+                    verticalalignment='top', color=cl)
+            c = c * scale_factor
+            rect_cloud = patches.Rectangle((x, temp_max + 3 - c), dttm_width, c * 2, edgecolor='none', facecolor='w')
+            ax.add_patch(rect_cloud)
+
+            pp = pp ** 0.2
+            if pt == "rain":
+                col = "aqua"
+            elif pt == "snow":
+                col = "snow"
+            else:
+                col = "red"
+
+            rect_precip = patches.Rectangle((x, temp_base), dttm_width, p * scale_factor * 10, edgecolor='none',
+                                            facecolor=col, alpha=pp)
+            ax.add_patch(rect_precip)
+
+        ax.xaxis.set_major_locator(mdates.DayLocator())
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('\n%d-%m-%Y %A'))
+        ax.xaxis.set_minor_locator(mdates.HourLocator(interval=3))
+        ax.xaxis.set_minor_formatter(mdates.DateFormatter('%H:%M'))
+        ax.grid(axis='x', linestyle='--')
+
+        ax.set_xlim([dttm_min - timedelta(hours=0), dttm_max + timedelta(hours=1)])
+        ax.set_ylim([temp_min - 2, temp_max + 4])
+
+        ax.get_yaxis().set_visible(False)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+
+        canvas = FigureCanvasTkAgg(fig, master=self)  # A tk.DrawingArea.
+        canvas.draw()
+        canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=1)
 
 
-class Calendar:
+class CalendarFrame:
     def __init__(self, master):
         # logging.debug("Frame Calendar initialization")
         self.frame = tk.Frame(master, bg="black")
