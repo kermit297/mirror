@@ -220,8 +220,16 @@ class ForecastFrame(tk.Frame):
 
         for x, t, c, p, pp, pt in zip(data['hr_dttm'], data['hr_temp'], data['hr_cloud'],
                                       data['hr_precip_int'], data['hr_precip_prob'], data['hr_precip_type']):
+
+            if t <= data['hist_temp_min']:
+                tcol = data['hist_temp_min']
+            elif t >= data['hist_temp_max']:
+                tcol = data['hist_temp_max']
+            else:
+                tcol = t
+
             rect_temp = patches.Rectangle((x, temp_base), dttm_width, t - temp_base, edgecolor='none',
-                                          facecolor=mapper_temp.to_rgba(t))
+                                          facecolor=mapper_temp.to_rgba(tcol))
             ax.add_patch(rect_temp)
 
             if t < (temp_max + temp_min) / 2:
