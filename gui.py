@@ -9,6 +9,7 @@ import matplotlib.patches as patches
 import matplotlib.cm as cm
 from matplotlib.colors import Normalize
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 import locale
 
 locale.setlocale(locale.LC_ALL, 'pl_PL.UTF-8')
@@ -26,14 +27,10 @@ class Application(tk.Tk):
         self.wu_api_key = config['wu_api_key']
 
         self.weather_data = WeatherData(self.dsn_api_key, self.wu_api_key)
-        #
-        # self.master = tk.Tk()
-        # self.master_frame = tk.Frame(self.master, bg="black")
-        # self.master_frame.pack(fill="both", expand=1)
-        #
+
         self.top_frame = tk.Frame(self, bg="black")
         self.top_frame.pack(side="top", fill="both")
-        self.bottom_frame = tk.Frame(self, bg="black")
+        self.bottom_frame = tk.Frame(self, bg="yellow")
         self.bottom_frame.pack(side="bottom", fill="both", expand=1)
 
         self.current_weather_frame = CurrentWeatherFrame(self.top_frame)
@@ -47,18 +44,21 @@ class Application(tk.Tk):
         #
         self.forecast_frame = ForecastFrame(self.bottom_frame)
         self.forecast_frame.pack(side="left", anchor="sw")
-        #
+
         # self.calendar = Calendar(self.bottom_frame)
         # self.calendar.frame.pack(side="right", anchor="se")
         self.refresh_data()
 
     def refresh_data(self):
-        # logging.warning("Application refresh")
         self.weather_data.get_data()
         self.current_weather_frame.refresh(getattr(self.weather_data, 'data_curr_temp'))
         self.forecast_frame.redraw(self.weather_data.data)
         self.astro_frame.refresh(self.weather_data.data['daily_sunrise'][0], self.weather_data.data['daily_sunset'][0])
         self.after(30*60*1000, self.refresh_data)
+
+    def _quit(self):
+        self.quit()  # stops mainloop
+        self.destroy()
 
 
 class WeatherData:
@@ -164,7 +164,6 @@ class CurrentWeatherFrame(tk.Frame):
 
 class AstroFrame:
     def __init__(self, master):
-        # logging.debug("Frame Astro initialization")
         self.frame = tk.Frame(master, bg= "black")
         self.sunrise = tk.StringVar()
         self.sunset = tk.StringVar()
@@ -183,8 +182,11 @@ class AstroFrame:
 class ForecastFrame(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master, bg="black")
-        #self.forecast_label = tk.Label(self, bg="black")
-        #self.forecast_label.pack(side="bottom")
+        plt.style.use('dark_background')
+        self.fig = Figure(figsize=(13, 3), dpi=100)
+        self.ax = self.fig.add_subplot(111)
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self)
+        self.canvas.get_tk_widget().pack(ipady=50)
 
     def redraw(self, data):
         dttm_min = min(data['hr_dttm'])
@@ -200,23 +202,19 @@ class ForecastFrame(tk.Frame):
         norm_temp = Normalize(vmin=data['hist_temp_min'], vmax=data['hist_temp_max'], clip=True)
         mapper_temp = cm.ScalarMappable(norm=norm_temp, cmap=cm.viridis)  # coolwarm
 
-        plt.style.use('dark_background')
-
-        fig, ax = plt.subplots(1, figsize=(12, 4), dpi=100)
-
         for s1, s2 in zip(data['daily_sunrise'], data['daily_sunset']):
             rect_daylight = patches.Rectangle((s1, temp_base),
                                               (s2 - s1),
                                               # (s2-s1).total_seconds()/(60*60*24),
                                               temp_max + 4 - temp_base,
                                               edgecolor='none', facecolor='yellow', alpha=0.1)
-            ax.add_patch(rect_daylight)
+            self.ax.add_patch(rect_daylight)
 
             rect_daylight_ext = patches.Rectangle((s1 - timedelta(hours=0.5), temp_base),
                                                   (s2 - s1 + timedelta(hours=1)),
                                                   temp_max + 4 - temp_base,
                                                   edgecolor='none', facecolor='yellow', alpha=0.1)
-            ax.add_patch(rect_daylight_ext)
+            self.ax.add_patch(rect_daylight_ext)
 
         for x, t, c, p, pp, pt in zip(data['hr_dttm'], data['hr_temp'], data['hr_cloud'],
                                       data['hr_precip_int'], data['hr_precip_prob'], data['hr_precip_type']):
@@ -230,18 +228,18 @@ class ForecastFrame(tk.Frame):
 
             rect_temp = patches.Rectangle((x, temp_base), dttm_width, t - temp_base, edgecolor='none',
                                           facecolor=mapper_temp.to_rgba(tcol))
-            ax.add_patch(rect_temp)
+            self.ax.add_patch(rect_temp)
 
             if t < (temp_max + temp_min) / 2:
                 cl = 'white'
             else:
                 cl = 'black'
 
-            ax.text(x + timedelta(hours=0.5), t - 0.1, str(round(t)), horizontalalignment='center',
+            self.ax.text(x + timedelta(hours=0.5), t - 0.1, str(round(t)), horizontalalignment='center',
                     verticalalignment='top', color=cl)
             c = c * scale_factor
             rect_cloud = patches.Rectangle((x, temp_max + 3 - c), dttm_width, c * 2, edgecolor='none', facecolor='w')
-            ax.add_patch(rect_cloud)
+            self.ax.add_patch(rect_cloud)
 
             pp = pp ** 0.2
             if pt == "rain":
@@ -253,26 +251,24 @@ class ForecastFrame(tk.Frame):
 
             rect_precip = patches.Rectangle((x, temp_base), dttm_width, p * scale_factor * 10, edgecolor='none',
                                             facecolor=col, alpha=pp)
-            ax.add_patch(rect_precip)
+            self.ax.add_patch(rect_precip)
 
-        ax.xaxis.set_major_locator(mdates.DayLocator())
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('\n%d-%m-%Y %A'))
-        ax.xaxis.set_minor_locator(mdates.HourLocator(interval=3))
-        ax.xaxis.set_minor_formatter(mdates.DateFormatter('%H:%M'))
-        ax.grid(axis='x', linestyle='--')
+        self.ax.xaxis.set_major_locator(mdates.DayLocator())
+        self.ax.xaxis.set_major_formatter(mdates.DateFormatter('\n%d-%m-%Y %A'))
+        self.ax.xaxis.set_minor_locator(mdates.HourLocator(interval=3))
+        self.ax.xaxis.set_minor_formatter(mdates.DateFormatter('%H:%M'))
+        self.ax.grid(axis='x', linestyle='--')
 
-        ax.set_xlim([dttm_min - timedelta(hours=0), dttm_max + timedelta(hours=1)])
-        ax.set_ylim([temp_min - 2, temp_max + 4])
+        self.ax.set_xlim([dttm_min - timedelta(hours=0), dttm_max + timedelta(hours=1)])
+        self.ax.set_ylim([temp_min - 2, temp_max + 4])
 
-        ax.get_yaxis().set_visible(False)
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.spines['bottom'].set_visible(False)
-        ax.spines['left'].set_visible(False)
+        self.ax.get_yaxis().set_visible(False)
+        self.ax.spines['top'].set_visible(False)
+        self.ax.spines['right'].set_visible(False)
+        self.ax.spines['bottom'].set_visible(False)
+        self.ax.spines['left'].set_visible(False)
 
-        canvas = FigureCanvasTkAgg(fig, master=self)  # A tk.DrawingArea.
-        canvas.draw()
-        canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=1)
+        self.canvas.draw()
 
 
 class CalendarFrame:
@@ -281,6 +277,7 @@ class CalendarFrame:
         self.frame = tk.Frame(master, bg="black")
         self.calendar = tk.Label(self.frame, text="CALENDAR", bg="black", fg="white")
         self.calendar.pack(side="bottom", anchor="se")
+
 
 
 app = Application()
