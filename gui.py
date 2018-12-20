@@ -54,7 +54,7 @@ class Application(tk.Tk):
         self.current_weather_frame.refresh(getattr(self.weather_data, 'data_curr_temp'))
         self.forecast_frame.redraw(self.weather_data.data)
         self.astro_frame.refresh(self.weather_data.data['daily_sunrise'][0], self.weather_data.data['daily_sunset'][0])
-        self.after(30*60*1000, self.refresh_data)
+        self.after(10*1000, self.refresh_data)
 
     def _quit(self):
         self.quit()  # stops mainloop
@@ -184,7 +184,7 @@ class ForecastFrame(tk.Frame):
         tk.Frame.__init__(self, master, bg="black")
         plt.style.use('dark_background')
         self.fig = Figure(figsize=(13, 3), dpi=100)
-        self.ax = self.fig.add_subplot(111)
+        self.subplot1 = self.fig.add_subplot(111)
         self.canvas = FigureCanvasTkAgg(self.fig, master=self)
         self.canvas.get_tk_widget().pack(ipady=50)
 
@@ -207,14 +207,14 @@ class ForecastFrame(tk.Frame):
                                               (s2 - s1),
                                               # (s2-s1).total_seconds()/(60*60*24),
                                               temp_max + 4 - temp_base,
-                                              edgecolor='none', facecolor='yellow', alpha=0.1)
-            self.ax.add_patch(rect_daylight)
+                                              edgecolor='none', facecolor='yellow', alpha=0.6)
+            self.subplot1.add_patch(rect_daylight)
 
             rect_daylight_ext = patches.Rectangle((s1 - timedelta(hours=0.5), temp_base),
                                                   (s2 - s1 + timedelta(hours=1)),
                                                   temp_max + 4 - temp_base,
-                                                  edgecolor='none', facecolor='yellow', alpha=0.1)
-            self.ax.add_patch(rect_daylight_ext)
+                                                  edgecolor='none', facecolor='yellow', alpha=0.2)
+            self.subplot1.add_patch(rect_daylight_ext)
 
         for x, t, c, p, pp, pt in zip(data['hr_dttm'], data['hr_temp'], data['hr_cloud'],
                                       data['hr_precip_int'], data['hr_precip_prob'], data['hr_precip_type']):
@@ -228,18 +228,18 @@ class ForecastFrame(tk.Frame):
 
             rect_temp = patches.Rectangle((x, temp_base), dttm_width, t - temp_base, edgecolor='none',
                                           facecolor=mapper_temp.to_rgba(tcol))
-            self.ax.add_patch(rect_temp)
+            self.subplot1.add_patch(rect_temp)
 
-            if t < (temp_max + temp_min) / 2:
+            if t < (data['hist_temp_min'] + data['hist_temp_max']) / 2:
                 cl = 'white'
             else:
                 cl = 'black'
 
-            self.ax.text(x + timedelta(hours=0.5), t - 0.1, str(round(t)), horizontalalignment='center',
-                    verticalalignment='top', color=cl)
+            self.subplot1.text(x + timedelta(hours=0.5), t - 0.1, str(round(t)), horizontalalignment='center',
+                               verticalalignment='top', color=cl)
             c = c * scale_factor
             rect_cloud = patches.Rectangle((x, temp_max + 3 - c), dttm_width, c * 2, edgecolor='none', facecolor='w')
-            self.ax.add_patch(rect_cloud)
+            self.subplot1.add_patch(rect_cloud)
 
             pp = pp ** 0.2
             if pt == "rain":
@@ -249,24 +249,26 @@ class ForecastFrame(tk.Frame):
             else:
                 col = "red"
 
-            rect_precip = patches.Rectangle((x, temp_base), dttm_width, p * scale_factor * 10, edgecolor='none',
+            rect_precip = patches.Rectangle((x, temp_base), dttm_width, p**0.5 * scale_factor * 5, edgecolor='none',
                                             facecolor=col, alpha=pp)
-            self.ax.add_patch(rect_precip)
+            self.subplot1.add_patch(rect_precip)
 
-        self.ax.xaxis.set_major_locator(mdates.DayLocator())
-        self.ax.xaxis.set_major_formatter(mdates.DateFormatter('\n%d-%m-%Y %A'))
-        self.ax.xaxis.set_minor_locator(mdates.HourLocator(interval=3))
-        self.ax.xaxis.set_minor_formatter(mdates.DateFormatter('%H:%M'))
-        self.ax.grid(axis='x', linestyle='--')
+        self.subplot1.xaxis.set_major_locator(mdates.DayLocator())
+        self.subplot1.xaxis.set_major_formatter(mdates.DateFormatter('\n%d-%m-%Y %A'))
+        self.subplot1.xaxis.set_minor_locator(mdates.HourLocator(interval=3))
+        self.subplot1.xaxis.set_minor_formatter(mdates.DateFormatter('%H:%M'))
+        self.subplot1.grid(axis='x', linestyle='--')
 
-        self.ax.set_xlim([dttm_min - timedelta(hours=0), dttm_max + timedelta(hours=1)])
-        self.ax.set_ylim([temp_min - 2, temp_max + 4])
+        self.subplot1.set_xlim([dttm_min - timedelta(hours=0), dttm_max + timedelta(hours=1)])
+        self.subplot1.set_ylim([temp_min - 2, temp_max + 4])
 
-        self.ax.get_yaxis().set_visible(False)
-        self.ax.spines['top'].set_visible(False)
-        self.ax.spines['right'].set_visible(False)
-        self.ax.spines['bottom'].set_visible(False)
-        self.ax.spines['left'].set_visible(False)
+        self.subplot1.get_yaxis().set_visible(False)
+        self.subplot1.spines['top'].set_visible(False)
+        self.subplot1.spines['right'].set_visible(False)
+        self.subplot1.spines['bottom'].set_visible(False)
+        self.subplot1.spines['left'].set_visible(False)
+
+        # self.fig.colorbar(self.ax)
 
         self.canvas.draw()
 
