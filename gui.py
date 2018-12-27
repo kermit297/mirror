@@ -54,7 +54,7 @@ class Application(tk.Tk):
         self.current_weather_frame.refresh(getattr(self.weather_data, 'data_curr_temp'))
         self.forecast_frame.redraw(self.weather_data.data)
         self.astro_frame.refresh(self.weather_data.data['daily_sunrise'][0], self.weather_data.data['daily_sunset'][0])
-        self.after(10*1000, self.refresh_data)
+        self.after(30*60*1000, self.refresh_data)
 
     def _quit(self):
         self.quit()  # stops mainloop
@@ -66,7 +66,9 @@ class WeatherData:
 
         self.dsn_api_key = dsn_api_key
         self.wu_api_key = wu_api_key
+        self.clr_data()
 
+    def clr_data(self):
         self.data = {}
 
         self.data_curr_temp = float()
@@ -85,6 +87,9 @@ class WeatherData:
         self.data['hist_temp_max'] = float()
 
     def get_data(self):
+
+        self.clr_data()
+
         url = "https://api.darksky.net/forecast/{}/52.200521,20.963080?lang=pl&units=si".format(self.dsn_api_key)
         html = urllib.request.urlopen(url).read()
         forecast = json.loads(html.decode('utf-8'))
@@ -183,12 +188,16 @@ class ForecastFrame(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master, bg="black")
         plt.style.use('dark_background')
-        self.fig = Figure(figsize=(13, 3), dpi=100)
-        self.subplot1 = self.fig.add_subplot(111)
-        self.canvas = FigureCanvasTkAgg(self.fig, master=self)
+        fig = Figure(figsize=(13, 3), dpi=100)
+        fig.add_subplot(111)
+        self.canvas = FigureCanvasTkAgg(fig, master=self)
         self.canvas.get_tk_widget().pack(ipady=50)
 
     def redraw(self, data):
+
+        self.canvas.figure.clf()
+        self.canvas.figure.add_subplot(111)
+
         dttm_min = min(data['hr_dttm'])
         dttm_max = max(data['hr_dttm'])
         dttm_width = timedelta(hours=1)
@@ -208,13 +217,13 @@ class ForecastFrame(tk.Frame):
                                               # (s2-s1).total_seconds()/(60*60*24),
                                               temp_max + 4 - temp_base,
                                               edgecolor='none', facecolor='yellow', alpha=0.6)
-            self.subplot1.add_patch(rect_daylight)
+            self.canvas.figure.axes[0].add_patch(rect_daylight)
 
             rect_daylight_ext = patches.Rectangle((s1 - timedelta(hours=0.5), temp_base),
                                                   (s2 - s1 + timedelta(hours=1)),
                                                   temp_max + 4 - temp_base,
                                                   edgecolor='none', facecolor='yellow', alpha=0.2)
-            self.subplot1.add_patch(rect_daylight_ext)
+            self.canvas.figure.axes[0].add_patch(rect_daylight_ext)
 
         for x, t, c, p, pp, pt in zip(data['hr_dttm'], data['hr_temp'], data['hr_cloud'],
                                       data['hr_precip_int'], data['hr_precip_prob'], data['hr_precip_type']):
@@ -228,18 +237,18 @@ class ForecastFrame(tk.Frame):
 
             rect_temp = patches.Rectangle((x, temp_base), dttm_width, t - temp_base, edgecolor='none',
                                           facecolor=mapper_temp.to_rgba(tcol))
-            self.subplot1.add_patch(rect_temp)
+            self.canvas.figure.axes[0].add_patch(rect_temp)
 
             if t < (data['hist_temp_min'] + data['hist_temp_max']) / 2:
                 cl = 'white'
             else:
                 cl = 'black'
 
-            self.subplot1.text(x + timedelta(hours=0.5), t - 0.1, str(round(t)), horizontalalignment='center',
+            self.canvas.figure.axes[0].text(x + timedelta(hours=0.5), t - 0.1, str(round(t)), horizontalalignment='center',
                                verticalalignment='top', color=cl)
             c = c * scale_factor
             rect_cloud = patches.Rectangle((x, temp_max + 3 - c), dttm_width, c * 2, edgecolor='none', facecolor='w')
-            self.subplot1.add_patch(rect_cloud)
+            self.canvas.figure.axes[0].add_patch(rect_cloud)
 
             pp = pp ** 0.2
             if pt == "rain":
@@ -251,22 +260,22 @@ class ForecastFrame(tk.Frame):
 
             rect_precip = patches.Rectangle((x, temp_base), dttm_width, p**0.5 * scale_factor * 5, edgecolor='none',
                                             facecolor=col, alpha=pp)
-            self.subplot1.add_patch(rect_precip)
+            self.canvas.figure.axes[0].add_patch(rect_precip)
 
-        self.subplot1.xaxis.set_major_locator(mdates.DayLocator())
-        self.subplot1.xaxis.set_major_formatter(mdates.DateFormatter('\n%d-%m-%Y %A'))
-        self.subplot1.xaxis.set_minor_locator(mdates.HourLocator(interval=3))
-        self.subplot1.xaxis.set_minor_formatter(mdates.DateFormatter('%H:%M'))
-        self.subplot1.grid(axis='x', linestyle='--')
+        self.canvas.figure.axes[0].xaxis.set_major_locator(mdates.DayLocator())
+        self.canvas.figure.axes[0].xaxis.set_major_formatter(mdates.DateFormatter('\n%d-%m-%Y %A'))
+        self.canvas.figure.axes[0].xaxis.set_minor_locator(mdates.HourLocator(interval=3))
+        self.canvas.figure.axes[0].xaxis.set_minor_formatter(mdates.DateFormatter('%H:%M'))
+        self.canvas.figure.axes[0].grid(axis='x', linestyle='--')
 
-        self.subplot1.set_xlim([dttm_min - timedelta(hours=0), dttm_max + timedelta(hours=1)])
-        self.subplot1.set_ylim([temp_min - 2, temp_max + 4])
+        self.canvas.figure.axes[0].set_xlim([dttm_min - timedelta(hours=0), dttm_max + timedelta(hours=1)])
+        self.canvas.figure.axes[0].set_ylim([temp_min - 2, temp_max + 4])
 
-        self.subplot1.get_yaxis().set_visible(False)
-        self.subplot1.spines['top'].set_visible(False)
-        self.subplot1.spines['right'].set_visible(False)
-        self.subplot1.spines['bottom'].set_visible(False)
-        self.subplot1.spines['left'].set_visible(False)
+        self.canvas.figure.axes[0].get_yaxis().set_visible(False)
+        self.canvas.figure.axes[0].spines['top'].set_visible(False)
+        self.canvas.figure.axes[0].spines['right'].set_visible(False)
+        self.canvas.figure.axes[0].spines['bottom'].set_visible(False)
+        self.canvas.figure.axes[0].spines['left'].set_visible(False)
 
         # self.fig.colorbar(self.ax)
 
