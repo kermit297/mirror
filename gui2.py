@@ -13,6 +13,9 @@ import locale
 import urllib.request
 import json
 from datetime import timedelta, datetime
+import matplotlib.pyplot as plt
+
+plt.style.use('dark_background')
 
 locale.setlocale(locale.LC_ALL, 'pl_PL.UTF-8')
 
@@ -25,13 +28,6 @@ class Application(QApplication):
         # p = self.window.palette()
         # p.setColor(self.window.backgroundRole(), Qt.red)
         # self.window.setPalette(p)
-        #
-        # frame1 = Frame()
-        #
-        # layout_window = QVBoxLayout()
-        # layout_window.addWidget(frame1)
-        #
-        # self.window.setLayout(layout_window)
         self.window.show()
 
 
@@ -43,12 +39,10 @@ class Window(QWidget):
 
         plt_layout = QVBoxLayout()
         self.frame_bottom_1.setLayout(plt_layout)
-
-        self.canvas = FigureCanvas(Figure(figsize=(5, 3)))
+        self.fig = Figure(figsize=(5, 3))
+        self.canvas = FigureCanvas(self.fig)
         plt_layout.addWidget(self.canvas)
         self.ax = self.canvas.figure.subplots()
-
-        plt.style.use('dark_background')
 
         with open('config.json') as data_file:
             config = json.load(data_file)
@@ -57,32 +51,45 @@ class Window(QWidget):
         self.wu_api_key = config['wu_api_key']
 
         self.weather_data = WeatherData(self.dsn_api_key, self.wu_api_key)
-        self.weather_data.get_data()
-        self.plot_forecast()
+        self.update_data()
 
         self.timer_clock = QTimer()
         self.timer_clock.timeout.connect(self.update_dttm)
         self.timer_clock.start(100)
 
         self.timer_plot = QTimer()
-        self.timer_plot.timeout.connect(self.update_forecast)
+        self.timer_plot.timeout.connect(self.update_data)
         self.timer_plot.start(1000*60*30)
 
     def update_dttm(self):
         self.label_time.setText(time.strftime("%H:%M:%S"))
         self.label_date.setText(time.strftime("%A, %d. %b"))
 
-    def update_forecast(self):
+        now = datetime.strptime(datetime.now().strftime('%Y%m%d %H:%M:%S'), '%Y%m%d %H:%M:%S')
 
+        # TODO: add more conditions
+        if now > self.weather_data.data['daily_sunrise'][0] and now < self.weather_data.data['daily_sunset'][0]:
+            timeTo = datetime.strptime(str(self.weather_data.data['daily_sunset'][0] - now), '%H:%M:%S').strftime('%H:%M')
+            self.label_time_to_sunrise.setText("Czas do zachodu: " + timeTo)
+
+    def update_data(self):
+        self.weather_data.get_data()
         self.plot_forecast()
 
-        #self.ax.clear()
-        #self.ax.plot(self.data)
-        #self.ax.figure.canvas.draw()
-        #self.data = np.roll(self.data, 1, 0)
+        temp = round(self.weather_data.data_curr_temp / 0.5) * 0.5  # round to nearest 0.5
+        self.label_temp.setText(str(temp) + u'\N{DEGREE SIGN}' + 'C')
+
+        self.label_summary.setText(self.weather_data.data_curr_summary)
+
+        sunrise = self.weather_data.data['daily_sunrise'][0]
+        self.label_sunrise.setText("Wschod: " + sunrise.strftime('%H:%M'))
+
+        sunset = self.weather_data.data['daily_sunset'][0]
+        self.label_sunset.setText("Zachod: " + sunset.strftime('%H:%M'))
+
+        self.label_day_len.setText("Dlugosc dnia: " + datetime.strptime(str(sunset - sunrise), "%H:%M:%S").strftime('%H:%M'))
 
     def plot_forecast(self):
-
         data = self.weather_data.data
         self.ax.clear()
 
@@ -166,7 +173,7 @@ class Window(QWidget):
         self.ax.spines['bottom'].set_visible(False)
         self.ax.spines['left'].set_visible(False)
 
-        #self.ax.axis('tight')
+        self.fig.tight_layout()
 
         self.ax.figure.canvas.draw()
 
@@ -182,6 +189,10 @@ class WeatherData:
         self.data = {}
 
         self.data_curr_temp = float()
+        self.data_curr_summary = str()
+        self.data_curr_humidity = float()
+        self.data_curr_cloudCover = float()
+        self.data_curr_precipProbability = float()
 
         self.data['hr_dttm'] = list()
         self.data['hr_temp'] = list()
@@ -206,6 +217,10 @@ class WeatherData:
 
         # current
         self.data_curr_temp = forecast['currently']['temperature']
+        self.data_curr_summary = forecast['currently']['summary']
+        self.data_curr_humidity = forecast['currently']['humidity']
+        self.data_curr_cloudCover = forecast['currently']['cloudCover']
+        self.data_curr_precipProbability = forecast['currently']['precipProbability']
 
         # forecast
         n = len(forecast['hourly']['data'])
@@ -236,40 +251,6 @@ class WeatherData:
         self.data['hist_temp_min'] = (float(history['temp_low']['avg']['C']) + float(history['temp_low']['min']['C'])) / 2
         self.data['hist_temp_max'] = (float(history['temp_high']['avg']['C']) + float(history['temp_high']['max']['C'])) / 2
 
-
-class Frame(QFrame):
-
-    def __init__(self):
-        QFrame.__init__(self)
-        layout = QVBoxLayout()
-        self.setLayout(layout)
-
-        layout.addWidget(QPushButton('Top'))
-
-        canvas = FigureCanvas(Figure(figsize=(5, 3)))
-        layout.addWidget(canvas)
-        self.ax = canvas.figure.subplots()
-
-        self.data = np.arange(1, 100, 1)
-
-        self.plt_timer = QTimer()
-        self.plt_timer.timeout.connect(self.update_plt)
-        self.plt_timer.start(500)
-
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.tick)
-        self.timer.start(1000)
-
-    def tick(self):
-        pass
-        #print("tick")
-
-    def update_plt(self):
-        #print(self.data)
-        self.ax.clear()
-        self.ax.plot(self.data)
-        self.ax.figure.canvas.draw()
-        self.data = np.roll(self.data, 1, 0)
 
 app = Application()
 app.exec_()
