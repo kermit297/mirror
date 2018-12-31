@@ -7,7 +7,6 @@ import matplotlib.patches as patches
 from matplotlib.colors import Normalize
 import matplotlib.cm as cm
 import matplotlib.dates as mdates
-import numpy as np
 import time
 import locale
 import urllib.request
@@ -26,7 +25,7 @@ class Application(QApplication):
 
         self.window = Window()
         # p = self.window.palette()
-        # p.setColor(self.window.backgroundRole(), Qt.red)
+        # p.setColor(self.window.backgroundRole(), Qt.black)
         # self.window.setPalette(p)
         self.window.show()
 
@@ -55,7 +54,7 @@ class Window(QWidget):
 
         self.timer_clock = QTimer()
         self.timer_clock.timeout.connect(self.update_dttm)
-        self.timer_clock.start(100)
+        self.timer_clock.start(1000)
 
         self.timer_plot = QTimer()
         self.timer_plot.timeout.connect(self.update_data)
@@ -66,11 +65,21 @@ class Window(QWidget):
         self.label_date.setText(time.strftime("%A, %d. %b"))
 
         now = datetime.strptime(datetime.now().strftime('%Y%m%d %H:%M:%S'), '%Y%m%d %H:%M:%S')
+        sunrise = self.weather_data.data['daily_sunrise'][0]
+        sunset = self.weather_data.data['daily_sunset'][0]
 
-        # TODO: add more conditions
-        if now > self.weather_data.data['daily_sunrise'][0] and now < self.weather_data.data['daily_sunset'][0]:
-            timeTo = datetime.strptime(str(self.weather_data.data['daily_sunset'][0] - now), '%H:%M:%S').strftime('%H:%M')
-            self.label_time_to_sunrise.setText("Czas do zachodu: " + timeTo)
+        if now < sunrise:
+            timeTo = datetime.strptime(str(sunrise - now), '%H:%M:%S').strftime('%H:%M')
+            txtTo = "Wschód Słońca za: "
+        elif now > sunrise and now <= sunset:
+            timeTo = datetime.strptime(str(sunset - now), '%H:%M:%S').strftime('%H:%M')
+            txtTo = "Zachód Słońca za: "
+        elif now > sunset:
+            timeTo = datetime.strptime(str(now-sunset), '%H:%M:%S').strftime('%H:%M')
+            txtTo = "Czas po zachodzie Słońca: "
+
+        self.label_time_to.setText(txtTo)
+        self.label_time_to_value.setText(timeTo)
 
     def update_data(self):
         self.weather_data.get_data()
@@ -82,12 +91,14 @@ class Window(QWidget):
         self.label_summary.setText(self.weather_data.data_curr_summary)
 
         sunrise = self.weather_data.data['daily_sunrise'][0]
-        self.label_sunrise.setText("Wschod: " + sunrise.strftime('%H:%M'))
-
         sunset = self.weather_data.data['daily_sunset'][0]
-        self.label_sunset.setText("Zachod: " + sunset.strftime('%H:%M'))
+        self.label_sunrise.setText(sunrise.strftime('%H:%M') + " - " + sunrise.strftime('%H:%M'))
 
-        self.label_day_len.setText("Dlugosc dnia: " + datetime.strptime(str(sunset - sunrise), "%H:%M:%S").strftime('%H:%M'))
+        self.label_day_len.setText(datetime.strptime(str(sunset - sunrise), "%H:%M:%S").strftime('%H:%M'))
+
+        self.label_humidity.setText(str(int(round(self.weather_data.data_curr_humidity, 2)*100)) + "%")
+        self.label_cloud.setText(str(int(round(self.weather_data.data_curr_cloudCover, 2)*100)) + "%")
+        self.label_precip.setText(str(int(round(self.weather_data.data_curr_precipProbability, 2)*100)) + "%")
 
     def plot_forecast(self):
         data = self.weather_data.data
