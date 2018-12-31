@@ -24,9 +24,9 @@ class Application(QApplication):
         QApplication.__init__(self, [])
 
         self.window = Window()
-        # p = self.window.palette()
-        # p.setColor(self.window.backgroundRole(), Qt.black)
-        # self.window.setPalette(p)
+        p = self.window.palette()
+        p.setColor(self.window.backgroundRole(), Qt.black)
+        self.window.setPalette(p)
         self.window.show()
 
 
@@ -62,7 +62,9 @@ class Window(QWidget):
 
     def update_dttm(self):
         self.label_time.setText(time.strftime("%H:%M:%S"))
+        self.label_time.setStyleSheet('QLabel { color: white }')
         self.label_date.setText(time.strftime("%A, %d. %b"))
+        self.label_date.setStyleSheet('QLabel { color: white }')
 
         now = datetime.strptime(datetime.now().strftime('%Y%m%d %H:%M:%S'), '%Y%m%d %H:%M:%S')
         sunrise = self.weather_data.data['daily_sunrise'][0]
@@ -79,7 +81,9 @@ class Window(QWidget):
             txtTo = "Czas po zachodzie Słońca: "
 
         self.label_time_to.setText(txtTo)
+        self.label_time_to.setStyleSheet('QLabel { color: white }')
         self.label_time_to_value.setText(timeTo)
+        self.label_time_to_value.setStyleSheet('QLabel { color: white }')
 
     def update_data(self):
         self.weather_data.get_data()
@@ -87,18 +91,25 @@ class Window(QWidget):
 
         temp = round(self.weather_data.data_curr_temp / 0.5) * 0.5  # round to nearest 0.5
         self.label_temp.setText(str(temp) + u'\N{DEGREE SIGN}' + 'C')
+        self.label_temp.setStyleSheet('QLabel { color: white }')
 
         self.label_summary.setText(self.weather_data.data_curr_summary)
+        self.label_summary.setStyleSheet('QLabel { color: white }')
 
         sunrise = self.weather_data.data['daily_sunrise'][0]
         sunset = self.weather_data.data['daily_sunset'][0]
         self.label_sunrise.setText(sunrise.strftime('%H:%M') + " - " + sunrise.strftime('%H:%M'))
+        self.label_sunrise.setStyleSheet('QLabel { color: white }')
 
         self.label_day_len.setText(datetime.strptime(str(sunset - sunrise), "%H:%M:%S").strftime('%H:%M'))
+        self.label_day_len.setStyleSheet('QLabel { color: white }')
 
         self.label_humidity.setText(str(int(round(self.weather_data.data_curr_humidity, 2)*100)) + "%")
+        self.label_humidity.setStyleSheet('QLabel { color: white }')
         self.label_cloud.setText(str(int(round(self.weather_data.data_curr_cloudCover, 2)*100)) + "%")
+        self.label_cloud.setStyleSheet('QLabel { color: white }')
         self.label_precip.setText(str(int(round(self.weather_data.data_curr_precipProbability, 2)*100)) + "%")
+        self.label_precip.setStyleSheet('QLabel { color: white }')
 
     def plot_forecast(self):
         data = self.weather_data.data
