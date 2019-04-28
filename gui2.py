@@ -16,6 +16,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import re
 import requests
+import numpy as np
+import calendar
+
 
 plt.style.use('dark_background')
 
@@ -64,7 +67,7 @@ class Window(QWidget):
         self.timer_plot.start(1000*60*30)
 
     def update_dttm(self):
-        self.label_time.setText(time.strftime("%H:%M:%S"))
+        self.label_time.setText(time.strftime("%H:%M"))
         self.label_time.setStyleSheet('QLabel { color: white }')
         self.label_date.setText(time.strftime("%A, %d. %b"))
         self.label_date.setStyleSheet('QLabel { color: white }')
@@ -101,7 +104,7 @@ class Window(QWidget):
 
         sunrise = self.weather_data.data['daily_sunrise'][0]
         sunset = self.weather_data.data['daily_sunset'][0]
-        self.label_sunrise.setText(sunrise.strftime('%H:%M') + " - " + sunrise.strftime('%H:%M'))
+        self.label_sunrise.setText(sunrise.strftime('%H:%M') + " - " + sunset.strftime('%H:%M'))
         self.label_sunrise.setStyleSheet('QLabel { color: white }')
 
         self.label_day_len.setText(datetime.strptime(str(sunset - sunrise), "%H:%M:%S").strftime('%H:%M'))
@@ -129,7 +132,7 @@ class Window(QWidget):
         scale_factor = (temp_max - temp_min) / 8
 
         norm_temp = Normalize(vmin=data['hist_temp_min'], vmax=data['hist_temp_max'], clip=True)
-        mapper_temp = cm.ScalarMappable(norm=norm_temp, cmap=cm.viridis)  # coolwarm
+        mapper_temp = cm.ScalarMappable(norm=norm_temp, cmap=cm.Spectral_r)  # coolwarm viridis
 
         for s1, s2 in zip(data['daily_sunrise'], data['daily_sunset']):
             rect_daylight = patches.Rectangle((s1, temp_base),
@@ -159,10 +162,12 @@ class Window(QWidget):
                                           facecolor=mapper_temp.to_rgba(tcol))
             self.ax.add_patch(rect_temp)
 
-            if t < (data['hist_temp_min'] + data['hist_temp_max']) / 2:
-                cl = 'white'
-            else:
-                cl = 'black'
+            # if t < (data['hist_temp_min'] + data['hist_temp_max']) / 2:
+            #     cl = 'white'
+            # else:
+            #     cl = 'black'
+
+            cl = 'black'
 
             self.ax.text(x + timedelta(hours=0.5), t - 0.1, str(round(t)),
                                             horizontalalignment='center',
@@ -278,15 +283,30 @@ class WeatherData:
             d['y'] = d['dt'].dt.year
             d['m'] = d['dt'].dt.month
             d = d.drop('dt', axis=1)
-            d = d.pivot(index='m', columns='y').mean(axis=1)
-            return d
+            d_mean = d.pivot(index='m', columns='y').mean(axis=1)
+            d_sd = d.pivot(index='m', columns='y').std(axis=1)
+            return d_mean, d_sd
 
-        d_min_temp = create_df('Min Temp')
-        d_max_temp = create_df('Max Temp')
-        # self.data['hist_temp'] = pd.concat((d_min_temp, d_max_temp), axis=1)
+        d_mean, d_sd = create_df('Min Temp')
+        d_min_temp = d_mean - 2 * d_sd
+        d_mean, d_sd = create_df('Max Temp')
+        d_max_temp = d_mean + 2 * d_sd
+        d = pd.concat((d_min_temp, d_max_temp), axis=1)
+
+        x = pd.Series([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]) + 0.5
+        y_min = d.loc[[12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1], :].iloc[:, 0]
+        y_max = d.loc[[12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1], :].iloc[:, 1]
+
+        y = datetime.now().year
         m = datetime.now().month
-        self.data['hist_temp_min'] = d_min_temp[m]
-        self.data['hist_temp_max'] = d_max_temp[m]
+        d = datetime.now().day
+        dm = calendar.monthrange(y, m)[1]
+
+        t_min = np.interp(x = m + d / dm, xp = x, fp = y_min)
+        t_max = np.interp(x = m + d / dm, xp = x, fp = y_max)
+
+        self.data['hist_temp_min'] = t_min
+        self.data['hist_temp_max'] = t_max
 
 
 app = Application()

@@ -110,17 +110,26 @@
          <item>
           <widget class="QFrame" name="frame">
            <property name="frameShape">
-            <enum>QFrame::StyledPanel</enum>
+            <enum>QFrame::NoFrame</enum>
            </property>
            <property name="frameShadow">
             <enum>QFrame::Raised</enum>
            </property>
+           <property name="lineWidth">
+            <number>0</number>
+           </property>
            <layout class="QGridLayout" name="gridLayout">
             <item row="1" column="3">
              <widget class="QLabel" name="label_1">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
               <property name="font">
                <font>
-                <pointsize>8</pointsize>
+                <pointsize>16</pointsize>
                </font>
               </property>
               <property name="text">
@@ -133,9 +142,15 @@
             </item>
             <item row="0" column="3">
              <widget class="QLabel" name="label_2">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
               <property name="font">
                <font>
-                <pointsize>8</pointsize>
+                <pointsize>16</pointsize>
                </font>
               </property>
               <property name="text">
@@ -148,9 +163,15 @@
             </item>
             <item row="2" column="4">
              <widget class="QLabel" name="label_time_to_value">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
               <property name="font">
                <font>
-                <pointsize>8</pointsize>
+                <pointsize>16</pointsize>
                </font>
               </property>
               <property name="text">
@@ -163,9 +184,15 @@
             </item>
             <item row="0" column="4">
              <widget class="QLabel" name="label_sunrise">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
               <property name="font">
                <font>
-                <pointsize>8</pointsize>
+                <pointsize>16</pointsize>
                </font>
               </property>
               <property name="text">
@@ -178,9 +205,15 @@
             </item>
             <item row="2" column="3">
              <widget class="QLabel" name="label_time_to">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
               <property name="font">
                <font>
-                <pointsize>8</pointsize>
+                <pointsize>16</pointsize>
                </font>
               </property>
               <property name="text">
@@ -193,6 +226,17 @@
             </item>
             <item row="1" column="0">
              <widget class="QLabel" name="label_5">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>16</pointsize>
+               </font>
+              </property>
               <property name="text">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;Wilgotność:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
@@ -203,6 +247,17 @@
             </item>
             <item row="0" column="0">
              <widget class="QLabel" name="label_4">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>16</pointsize>
+               </font>
+              </property>
               <property name="text">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;Zachmurzenie:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
@@ -213,9 +268,15 @@
             </item>
             <item row="1" column="4">
              <widget class="QLabel" name="label_day_len">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
               <property name="font">
                <font>
-                <pointsize>8</pointsize>
+                <pointsize>16</pointsize>
                </font>
               </property>
               <property name="text">
@@ -228,6 +289,17 @@
             </item>
             <item row="2" column="0">
              <widget class="QLabel" name="label_3">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>16</pointsize>
+               </font>
+              </property>
               <property name="text">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;Opady:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
@@ -238,6 +310,17 @@
             </item>
             <item row="0" column="1">
              <widget class="QLabel" name="label_cloud">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>16</pointsize>
+               </font>
+              </property>
               <property name="text">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;Text&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
@@ -248,6 +331,17 @@
             </item>
             <item row="1" column="1">
              <widget class="QLabel" name="label_humidity">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>16</pointsize>
+               </font>
+              </property>
               <property name="text">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;Text&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
@@ -258,6 +352,17 @@
             </item>
             <item row="2" column="1">
              <widget class="QLabel" name="label_precip">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>16</pointsize>
+               </font>
+              </property>
               <property name="text">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;Text&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
