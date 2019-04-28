@@ -401,40 +401,6 @@
         </property>
        </widget>
       </item>
-      <item>
-       <widget class="QFrame" name="frame_bottom_2">
-        <property name="frameShape">
-         <enum>QFrame::NoFrame</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
-        </property>
-        <widget class="QCalendarWidget" name="calendarWidget">
-         <property name="geometry">
-          <rect>
-           <x>20</x>
-           <y>30</y>
-           <width>471</width>
-           <height>231</height>
-          </rect>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-          </font>
-         </property>
-         <property name="selectionMode">
-          <enum>QCalendarWidget::SingleSelection</enum>
-         </property>
-         <property name="navigationBarVisible">
-          <bool>false</bool>
-         </property>
-         <property name="dateEditEnabled">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </widget>
-      </item>
      </layout>
     </widget>
    </item>

@@ -13,6 +13,9 @@ import urllib.request
 import json
 from datetime import timedelta, datetime
 import matplotlib.pyplot as plt
+import pandas as pd
+import re
+import requests
 
 plt.style.use('dark_background')
 
@@ -49,7 +52,7 @@ class Window(QWidget):
         self.dsn_api_key = config['dsn_api_key']
         self.wu_api_key = config['wu_api_key']
 
-        self.weather_data = WeatherData(self.dsn_api_key, self.wu_api_key)
+        self.weather_data = WeatherData(self.dsn_api_key)
         self.update_data()
 
         self.timer_clock = QTimer()
@@ -201,10 +204,9 @@ class Window(QWidget):
 
 
 class WeatherData:
-    def __init__(self, dsn_api_key, wu_api_key):
+    def __init__(self, dsn_api_key):
 
         self.dsn_api_key = dsn_api_key
-        self.wu_api_key = wu_api_key
         self.clr_data()
 
     def clr_data(self):
@@ -264,14 +266,27 @@ class WeatherData:
             self.data['daily_sunset'].append(datetime.fromtimestamp(forecast['daily']['data'][i]['sunsetTime']))
 
         # historical
-        date = datetime.now()
-        min_dt = (date - timedelta(days=15)).strftime("%m%d")
-        max_dt = (date + timedelta(days=15)).strftime("%m%d")
-        url = "http://api.wunderground.com/api/{0}/planner_{1}{2}/q/PL/Warsaw.json".format(self.wu_api_key, min_dt, max_dt)
-        html = urllib.request.urlopen(url).read()
-        # history = json.loads(html.decode('utf-8'))['trip']
-        self.data['hist_temp_min'] = 3 #(float(history['temp_low']['avg']['C']) + float(history['temp_low']['min']['C'])) / 2
-        self.data['hist_temp_max'] = 25 # (float(history['temp_high']['avg']['C']) + float(history['temp_high']['max']['C'])) / 2
+        url = 'https://www.worldweatheronline.com/warsaw-weather-averages/pl.aspx'
+        page = requests.get(url)
+        all_series = re.findall('{name:.+?}', page.text)
+
+        def create_df(pattern):
+            str_series = [re.search('(?<=data:)\[.+?\]\]', x).group() for x in all_series if x.__contains__(pattern)][0]
+            d = pd.read_json(str_series)
+            d.columns = ['dt', 'val']
+            d.dt = pd.to_datetime(d.dt, unit='ms')
+            d['y'] = d['dt'].dt.year
+            d['m'] = d['dt'].dt.month
+            d = d.drop('dt', axis=1)
+            d = d.pivot(index='m', columns='y').mean(axis=1)
+            return d
+
+        d_min_temp = create_df('Min Temp')
+        d_max_temp = create_df('Max Temp')
+        # self.data['hist_temp'] = pd.concat((d_min_temp, d_max_temp), axis=1)
+        m = datetime.now().month
+        self.data['hist_temp_min'] = d_min_temp[m]
+        self.data['hist_temp_max'] = d_max_temp[m]
 
 
 app = Application()
