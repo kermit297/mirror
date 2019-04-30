@@ -18,6 +18,8 @@ import re
 import requests
 import numpy as np
 import calendar
+import matplotlib as mpl
+from matplotlib import gridspec
 
 
 plt.style.use('dark_background')
@@ -47,7 +49,10 @@ class Window(QWidget):
         self.fig = Figure(figsize=(5, 3))
         self.canvas = FigureCanvas(self.fig)
         plt_layout.addWidget(self.canvas)
-        self.ax = self.canvas.figure.subplots()
+
+        self.gs = gridspec.GridSpec(1, 2, width_ratios=[50, 1], wspace=0.03)
+        self.ax = self.canvas.figure.add_subplot(self.gs[0])
+        self.ax2 = self.canvas.figure.add_subplot(self.gs[1])
 
         with open('config.json') as data_file:
             config = json.load(data_file)
@@ -120,6 +125,7 @@ class Window(QWidget):
     def plot_forecast(self):
         data = self.weather_data.data
         self.ax.clear()
+        self.ax2.clear()
 
         dttm_min = min(data['hr_dttm'])
         dttm_max = max(data['hr_dttm'])
@@ -131,8 +137,10 @@ class Window(QWidget):
 
         scale_factor = (temp_max - temp_min) / 8
 
+        cmap = cm.Spectral_r  # coolwarm viridis
+
         norm_temp = Normalize(vmin=data['hist_temp_min'], vmax=data['hist_temp_max'], clip=True)
-        mapper_temp = cm.ScalarMappable(norm=norm_temp, cmap=cm.Spectral_r)  # coolwarm viridis
+        mapper_temp = cm.ScalarMappable(norm=norm_temp, cmap=cmap)
 
         for s1, s2 in zip(data['daily_sunrise'], data['daily_sunset']):
             rect_daylight = patches.Rectangle((s1, temp_base),
@@ -187,6 +195,9 @@ class Window(QWidget):
             rect_precip = patches.Rectangle((x, temp_base), dttm_width, p ** 0.5 * scale_factor * 5, edgecolor='none',
                                             facecolor=col, alpha=pp)
             self.ax.add_patch(rect_precip)
+
+        cb1 = mpl.colorbar.ColorbarBase(self.ax2, cmap=cmap, norm=norm_temp, orientation='vertical')
+        cb1.set_label(u'\N{DEGREE SIGN}' + 'C')
 
         self.ax.xaxis.set_major_locator(mdates.DayLocator())
         self.ax.xaxis.set_major_formatter(mdates.DateFormatter('\n%d-%m-%Y %A'))
@@ -288,9 +299,9 @@ class WeatherData:
             return d_mean, d_sd
 
         d_mean, d_sd = create_df('Min Temp')
-        d_min_temp = d_mean - 2 * d_sd
+        d_min_temp = d_mean - 3 * d_sd
         d_mean, d_sd = create_df('Max Temp')
-        d_max_temp = d_mean + 2 * d_sd
+        d_max_temp = d_mean + 3 * d_sd
         d = pd.concat((d_min_temp, d_max_temp), axis=1)
 
         x = pd.Series([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]) + 0.5
