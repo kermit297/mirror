@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>876</width>
-    <height>566</height>
+    <width>1094</width>
+    <height>773</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -40,7 +40,7 @@
      <property name="maximumSize">
       <size>
        <width>16777215</width>
-       <height>220</height>
+       <height>290</height>
       </size>
      </property>
      <property name="frameShape">
