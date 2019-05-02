@@ -35,7 +35,7 @@ class Application(QApplication):
         p = self.window.palette()
         p.setColor(self.window.backgroundRole(), Qt.black)
         self.window.setPalette(p)
-        self.window.show()
+        self.window.showFullScreen()
 
 
 class Window(QWidget):
