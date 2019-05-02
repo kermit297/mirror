@@ -170,12 +170,10 @@ class Window(QWidget):
                                           facecolor=mapper_temp.to_rgba(tcol))
             self.ax.add_patch(rect_temp)
 
-            # if t < (data['hist_temp_min'] + data['hist_temp_max']) / 2:
-            #     cl = 'white'
-            # else:
-            #     cl = 'black'
-
-            cl = 'black'
+            if t <  data['hist_temp_min'] + (data['hist_temp_max'] - data['hist_temp_min']) * 0.2:
+                cl = 'white'
+            else:
+                cl = 'black'
 
             self.ax.text(x + timedelta(hours=0.5), t - 0.1, str(round(t)),
                                             horizontalalignment='center',

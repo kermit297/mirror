@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>876</width>
-    <height>550</height>
+    <height>566</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,7 +34,7 @@
      <property name="minimumSize">
       <size>
        <width>0</width>
-       <height>220</height>
+       <height>290</height>
       </size>
      </property>
      <property name="maximumSize">
@@ -78,7 +78,7 @@
           <widget class="QLabel" name="label_temp">
            <property name="font">
             <font>
-             <pointsize>50</pointsize>
+             <pointsize>90</pointsize>
             </font>
            </property>
            <property name="text">
@@ -96,7 +96,7 @@
           <widget class="QLabel" name="label_summary">
            <property name="font">
             <font>
-             <pointsize>20</pointsize>
+             <pointsize>40</pointsize>
             </font>
            </property>
            <property name="text">
@@ -428,7 +428,7 @@
           <widget class="QLabel" name="label_time">
            <property name="font">
             <font>
-             <pointsize>70</pointsize>
+             <pointsize>90</pointsize>
             </font>
            </property>
            <property name="text">
