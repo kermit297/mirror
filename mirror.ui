@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1094</width>
-    <height>773</height>
+    <width>1054</width>
+    <height>700</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,17 +17,20 @@
    <string notr="true"/>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>1</number>
+   </property>
    <property name="leftMargin">
-    <number>5</number>
+    <number>1</number>
    </property>
    <property name="topMargin">
-    <number>5</number>
+    <number>1</number>
    </property>
    <property name="rightMargin">
-    <number>5</number>
+    <number>1</number>
    </property>
    <property name="bottomMargin">
-    <number>5</number>
+    <number>1</number>
    </property>
    <item>
     <widget class="QFrame" name="frame_top">
@@ -40,7 +43,7 @@
      <property name="maximumSize">
       <size>
        <width>16777215</width>
-       <height>290</height>
+       <height>300</height>
       </size>
      </property>
      <property name="frameShape">
@@ -51,19 +54,19 @@
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <property name="spacing">
-       <number>5</number>
+       <number>1</number>
       </property>
       <property name="leftMargin">
-       <number>5</number>
+       <number>1</number>
       </property>
       <property name="topMargin">
-       <number>5</number>
+       <number>1</number>
       </property>
       <property name="rightMargin">
-       <number>5</number>
+       <number>1</number>
       </property>
       <property name="bottomMargin">
-       <number>5</number>
+       <number>1</number>
       </property>
       <item>
        <widget class="QFrame" name="frame_top_1">
@@ -74,11 +77,26 @@
          <enum>QFrame::Raised</enum>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
+         <property name="spacing">
+          <number>1</number>
+         </property>
+         <property name="leftMargin">
+          <number>1</number>
+         </property>
+         <property name="topMargin">
+          <number>1</number>
+         </property>
+         <property name="rightMargin">
+          <number>1</number>
+         </property>
+         <property name="bottomMargin">
+          <number>1</number>
+         </property>
          <item>
           <widget class="QLabel" name="label_temp">
            <property name="font">
             <font>
-             <pointsize>90</pointsize>
+             <pointsize>120</pointsize>
             </font>
            </property>
            <property name="text">
@@ -96,7 +114,7 @@
           <widget class="QLabel" name="label_summary">
            <property name="font">
             <font>
-             <pointsize>40</pointsize>
+             <pointsize>50</pointsize>
             </font>
            </property>
            <property name="text">
@@ -119,6 +137,21 @@
             <number>0</number>
            </property>
            <layout class="QGridLayout" name="gridLayout">
+            <property name="leftMargin">
+             <number>1</number>
+            </property>
+            <property name="topMargin">
+             <number>1</number>
+            </property>
+            <property name="rightMargin">
+             <number>1</number>
+            </property>
+            <property name="bottomMargin">
+             <number>1</number>
+            </property>
+            <property name="horizontalSpacing">
+             <number>1</number>
+            </property>
             <item row="1" column="3">
              <widget class="QLabel" name="label_1">
               <property name="minimumSize">
@@ -129,7 +162,7 @@
               </property>
               <property name="font">
                <font>
-                <pointsize>16</pointsize>
+                <pointsize>20</pointsize>
                </font>
               </property>
               <property name="text">
@@ -150,7 +183,7 @@
               </property>
               <property name="font">
                <font>
-                <pointsize>16</pointsize>
+                <pointsize>20</pointsize>
                </font>
               </property>
               <property name="text">
@@ -171,7 +204,7 @@
               </property>
               <property name="font">
                <font>
-                <pointsize>16</pointsize>
+                <pointsize>20</pointsize>
                </font>
               </property>
               <property name="text">
@@ -192,7 +225,7 @@
               </property>
               <property name="font">
                <font>
-                <pointsize>16</pointsize>
+                <pointsize>20</pointsize>
                </font>
               </property>
               <property name="text">
@@ -213,7 +246,7 @@
               </property>
               <property name="font">
                <font>
-                <pointsize>16</pointsize>
+                <pointsize>20</pointsize>
                </font>
               </property>
               <property name="text">
@@ -234,7 +267,7 @@
               </property>
               <property name="font">
                <font>
-                <pointsize>16</pointsize>
+                <pointsize>20</pointsize>
                </font>
               </property>
               <property name="text">
@@ -255,7 +288,7 @@
               </property>
               <property name="font">
                <font>
-                <pointsize>16</pointsize>
+                <pointsize>20</pointsize>
                </font>
               </property>
               <property name="text">
@@ -276,7 +309,7 @@
               </property>
               <property name="font">
                <font>
-                <pointsize>16</pointsize>
+                <pointsize>20</pointsize>
                </font>
               </property>
               <property name="text">
@@ -297,7 +330,7 @@
               </property>
               <property name="font">
                <font>
-                <pointsize>16</pointsize>
+                <pointsize>20</pointsize>
                </font>
               </property>
               <property name="text">
@@ -318,7 +351,7 @@
               </property>
               <property name="font">
                <font>
-                <pointsize>16</pointsize>
+                <pointsize>20</pointsize>
                </font>
               </property>
               <property name="text">
@@ -339,7 +372,7 @@
               </property>
               <property name="font">
                <font>
-                <pointsize>16</pointsize>
+                <pointsize>20</pointsize>
                </font>
               </property>
               <property name="text">
@@ -360,7 +393,7 @@
               </property>
               <property name="font">
                <font>
-                <pointsize>16</pointsize>
+                <pointsize>20</pointsize>
                </font>
               </property>
               <property name="text">
@@ -399,6 +432,21 @@
          <enum>QFrame::Raised</enum>
         </property>
         <layout class="QFormLayout" name="formLayout">
+         <property name="horizontalSpacing">
+          <number>1</number>
+         </property>
+         <property name="leftMargin">
+          <number>1</number>
+         </property>
+         <property name="topMargin">
+          <number>1</number>
+         </property>
+         <property name="rightMargin">
+          <number>1</number>
+         </property>
+         <property name="bottomMargin">
+          <number>1</number>
+         </property>
          <item row="2" column="1">
           <spacer name="horizontalSpacer_2">
            <property name="orientation">
@@ -424,11 +472,26 @@
          <enum>QFrame::Raised</enum>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_4">
+         <property name="spacing">
+          <number>1</number>
+         </property>
+         <property name="leftMargin">
+          <number>1</number>
+         </property>
+         <property name="topMargin">
+          <number>1</number>
+         </property>
+         <property name="rightMargin">
+          <number>1</number>
+         </property>
+         <property name="bottomMargin">
+          <number>1</number>
+         </property>
          <item>
           <widget class="QLabel" name="label_time">
            <property name="font">
             <font>
-             <pointsize>90</pointsize>
+             <pointsize>120</pointsize>
             </font>
            </property>
            <property name="text">
@@ -443,7 +506,7 @@
           <widget class="QLabel" name="label_date">
            <property name="font">
             <font>
-             <pointsize>40</pointsize>
+             <pointsize>50</pointsize>
             </font>
            </property>
            <property name="text">
@@ -485,16 +548,16 @@
        <number>5</number>
       </property>
       <property name="leftMargin">
-       <number>5</number>
+       <number>1</number>
       </property>
       <property name="topMargin">
-       <number>5</number>
+       <number>1</number>
       </property>
       <property name="rightMargin">
-       <number>5</number>
+       <number>1</number>
       </property>
       <property name="bottomMargin">
-       <number>5</number>
+       <number>1</number>
       </property>
       <item>
        <widget class="QFrame" name="frame_bottom_1">
