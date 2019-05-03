@@ -184,7 +184,7 @@ class Window(QWidget):
 
             pp = pp ** 0.2
             if pt == "rain":
-                col = "navy"  # "aqua"
+                col = "dodgerblue"  # "aqua"
             elif pt == "snow":
                 col = "snow"
             else:

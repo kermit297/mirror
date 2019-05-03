@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1054</width>
-    <height>700</height>
+    <width>1153</width>
+    <height>709</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -37,13 +37,13 @@
      <property name="minimumSize">
       <size>
        <width>0</width>
-       <height>290</height>
+       <height>0</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
        <width>16777215</width>
-       <height>300</height>
+       <height>1000000</height>
       </size>
      </property>
      <property name="frameShape">
@@ -97,12 +97,21 @@
            <property name="minimumSize">
             <size>
              <width>0</width>
-             <height>125</height>
+             <height>200</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>200</height>
             </size>
            </property>
            <property name="font">
             <font>
              <pointsize>120</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+             <kerning>true</kerning>
             </font>
            </property>
            <property name="text">
@@ -121,7 +130,13 @@
            <property name="minimumSize">
             <size>
              <width>0</width>
-             <height>55</height>
+             <height>100</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>100</height>
             </size>
            </property>
            <property name="font">
@@ -139,6 +154,18 @@
          </item>
          <item>
           <widget class="QFrame" name="frame">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>150</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>150</height>
+            </size>
+           </property>
            <property name="frameShape">
             <enum>QFrame::NoFrame</enum>
            </property>
@@ -161,7 +188,7 @@
             <property name="bottomMargin">
              <number>1</number>
             </property>
-            <property name="horizontalSpacing">
+            <property name="spacing">
              <number>1</number>
             </property>
             <item row="1" column="3">
@@ -501,9 +528,23 @@
          </property>
          <item>
           <widget class="QLabel" name="label_time">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>200</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>200</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <pointsize>120</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
             </font>
            </property>
            <property name="text">
@@ -516,6 +557,12 @@
          </item>
          <item>
           <widget class="QLabel" name="label_date">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <pointsize>50</pointsize>
