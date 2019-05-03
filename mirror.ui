@@ -94,6 +94,12 @@
          </property>
          <item>
           <widget class="QLabel" name="label_temp">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>125</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <pointsize>120</pointsize>
@@ -112,6 +118,12 @@
          </item>
          <item>
           <widget class="QLabel" name="label_summary">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>55</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <pointsize>50</pointsize>
