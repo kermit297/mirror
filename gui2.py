@@ -20,6 +20,7 @@ import numpy as np
 import calendar
 import matplotlib as mpl
 from matplotlib import gridspec
+from bs4 import BeautifulSoup
 
 
 plt.style.use('dark_background')
@@ -67,6 +68,11 @@ class Window(QWidget):
         self.timer_clock.timeout.connect(self.update_dttm)
         self.timer_clock.start(1000)
 
+        self.update_trains()
+        self.timer_train = QTimer()
+        self.timer_train.timeout.connect(self.update_trains)
+        self.timer_train.start(1000*60*5)
+
         self.timer_plot = QTimer()
         self.timer_plot.timeout.connect(self.update_data)
         self.timer_plot.start(1000*60*30)
@@ -95,6 +101,32 @@ class Window(QWidget):
         self.label_time_to.setStyleSheet('QLabel { color: white }')
         self.label_time_to_value.setText(timeTo)
         self.label_time_to_value.setStyleSheet('QLabel { color: white }')
+
+    def update_trains(self):
+        dttm = datetime.today()
+        url = 'https://bilkom.pl/podroz?carrierKeys=P2%2CP1%2CP5%2CO1%2CP9%2CP0%2CP7%2CP3%2CPZ%2CP8%2CP4%2CP6' \
+              '&fromStation=Warszawa+Rakowiec&poczatkowa=A%3D1%40O%3DWarszawa+Rakowiec%40X%3D20965919%40Y' \
+              '%3D52196818%40U%3D55%40L%3D005104216%40B%3D1%40p%3D1558610439%40' \
+              '&middleStation1=&posrednia1=&middleStation2=&posrednia2=' \
+              '&toStation=Warszawa+Ochota&docelowa=A%3D1%40O%3DWarszawa+Ochota%40X%3D20990576%40Y%3D52225727%40U%3D55' \
+              '%40L%3D005103934%40B%3D1%40p%3D1558610439%40' \
+              '&data={d}{m}{Y}{H}{M}&date={d}%2F{m}%2F{Y}&time={H}%3A{M}' \
+              '&przyjazd=false&minChangeTime=10&_csrf='.format(Y=dttm.year, m=dttm.month, d=dttm.day, H=dttm.hour,
+                                                               M=dttm.minute)
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'
+        }
+        page = requests.get(url, headers=headers)
+        html = BeautifulSoup(page.text, 'html.parser')
+        trips = html.findAll('div', attrs={'class': 'trip'})
+
+        trips_str = 'Następne pociągi do PKP Ochota:\n'
+        for trip in trips:
+            t = trip.find('div', attrs={'class': 'time late'})
+            trips_str += t.text + '\n'
+
+        self.label_trains.setText(trips_str)
+        self.label_trains.setStyleSheet('QLabel { color: white }')
 
     def update_data(self):
         self.weather_data.get_data()
