@@ -247,6 +247,8 @@ class Window(QWidget):
         self.fig.tight_layout()
 
         self.ax.figure.canvas.draw()
+        self.fig.set_size_inches(12, 5)
+        self.fig.savefig('forecast.png', dpi=200)
 
 
 class WeatherData:
